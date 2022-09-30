@@ -1,4 +1,8 @@
 %lang starknet
+// Dict imports
+from starkware.cairo.common.default_dict import default_dict_new, default_dict_finalize
+from starkware.cairo.common.dict import dict_write, dict_read, dict_update
+from starkware.cairo.common.dict_access import DictAccess
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.alloc import alloc
@@ -15,7 +19,7 @@ func identify_successors{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_c
     return (res,);
 }
 
-func prune{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(map: Map, node: Point, movement: Movement, neighbours: Point*) -> (res: Point*) {
+func prune{range_check_ptr}(map: Map, node: Point, movement: Movement, neighbours: Point*) -> (res: Point*) {
     let (len_res, all_neighbours: Point*) = get_all_neighbours_of(map, node);
     let (res: Point*) = alloc();
     return (res,);
@@ -23,80 +27,72 @@ func prune{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(map:
 
 func get_all_neighbours_of{range_check_ptr}(map: Map, node: Point) -> (len_res: felt, res: Point*) {
     alloc_locals;
-    let (res: Point*) = alloc();
-    let len_res = 0;
-
-
+    let (all_neighbours: Point*) = alloc();
+    tempvar all_neighbours_len = 8;
 
     let neighbour = get_point_by_position(map, node.x + 1, node.y);
-    assert res[0] =  neighbour;
+    assert all_neighbours[0] =  neighbour;
     
     let neighbour = get_point_by_position(map, node.x - 1, node.y);
-    assert res[1] =  neighbour;
+    assert all_neighbours[1] =  neighbour;
     
     let neighbour = get_point_by_position(map, node.x, node.y + 1);
-    assert res[2] =  neighbour;
+    assert all_neighbours[2] =  neighbour;
     
     let neighbour = get_point_by_position(map, node.x, node.y - 1);
-    assert res[3] =  neighbour;
+    assert all_neighbours[3] =  neighbour;
     
     let neighbour = get_point_by_position(map, node.x + 1, node.y + 1);
-    assert res[4] =  neighbour;
+    assert all_neighbours[4] =  neighbour;
     
     let neighbour = get_point_by_position(map, node.x - 1, node.y - 1);
-    assert res[5] =  neighbour;
+    assert all_neighbours[5] =  neighbour;
     
     let neighbour = get_point_by_position(map, node.x + 1, node.y - 1);
-    assert res[6] =  neighbour;
+    assert all_neighbours[6] =  neighbour;
     
     let neighbour = get_point_by_position(map, node.x - 1, node.y + 1);
-    assert res[7] =  neighbour;
+    assert all_neighbours[7] =  neighbour;
 
-    return (8,res,);
+    let filtered_neighbours: Point* = alloc();
+    // func 
+    filter_neighbours_if_not_walkable(all_neighbours, 8, filtered_neighbours, 0);
+
+
+    let filtered_neighbours_len =  filter_neighbours_if_not_walkable_len(all_neighbours, 8);
+    // func 
+
+    return (filtered_neighbours_len, filtered_neighbours);
 }
 
-
-// func get_all_neighbours_of_internal{range_check_ptr}(map: Map, node: Point, x: felt, finish_x:felt, y: felt, finish_y) -> (len_res: felt, res: Point*) {
-func get_all_neighbours_of_internal{range_check_ptr}(map: Map, node: Point) -> (len_res: felt, res: Point*) {
+func filter_neighbours_if_not_walkable(all_neighbours: Point*, all_neighbours_len: felt, filtered_neighbours: Point*, idx_filtered_neighbours: felt) {
     alloc_locals;
-    // if (x == -1 and finish_x == 1) {
-    //     x = 1;
-    //     finish_x = 0;
-    // }
-
-    let immediateNeighbors: Point* = alloc();
-    let idx_immediateNeighbors = 0; 
-    for_each_x(-1, 1, map, node, immediateNeighbors, idx_immediateNeighbors);
-    return (idx_immediateNeighbors, immediateNeighbors,);
-}
-
-func for_each_x{range_check_ptr}(index: felt, length: felt, map: Map, node: Point, immediateNeighbors: Point*, idx_immediateNeighbors: felt) {
-
-    if (index == length + 1) {
+    if (all_neighbours_len == 0) {
         return ();
     }
 
-    for_each_y(-1, 1, index, map, node, immediateNeighbors, idx_immediateNeighbors);
-
-    for_each_x(index + 1, length, map, node, immediateNeighbors, idx_immediateNeighbors);
-    return ();
+    if ([all_neighbours].walkable == 1) {
+        assert filtered_neighbours[idx_filtered_neighbours] = [all_neighbours];
+        filter_neighbours_if_not_walkable(all_neighbours + Point.SIZE, all_neighbours_len - 1, filtered_neighbours, idx_filtered_neighbours + 1);
+        return(); 
+    }
+    filter_neighbours_if_not_walkable(all_neighbours + Point.SIZE, all_neighbours_len - 1, filtered_neighbours, idx_filtered_neighbours);
+    return(); 
 }
 
-func for_each_y{range_check_ptr}(index_y: felt, length: felt, index_x: felt, map: Map, node: Point, immediateNeighbors: Point*, idx_immediateNeighbors: felt) {
-    
-    if (index_y == length + 1) {
-        return ();
+func filter_neighbours_if_not_walkable_len(all_neighbours: Point*, all_neighbours_len: felt) -> felt {
+    alloc_locals;
+    if (all_neighbours_len == 0) {
+        return (0);
     }
 
-    // distinto del (0, 0)
-    // if (index_x == 0 and index_y == 0) {
-    //     return ();
-    // }
-    
-    // si es caminable, por ahora que devuelva todos
-    // let p = get_point_by_position(map, node.x + index_x, node.y + index_y);
-    assert immediateNeighbors[idx_immediateNeighbors] = Point(node.x + index_x, node.y + index_y, 1);
-
-
-    return for_each_y(index_y + 1, length, index_x, map, node, immediateNeighbors, idx_immediateNeighbors + 1);
+    local cont;
+    if ([all_neighbours].walkable == 1) {
+        cont = 1;
+    } else {
+        cont = 0;
+    }
+    let total = filter_neighbours_if_not_walkable_len(all_neighbours + Point.SIZE, all_neighbours_len - 1); 
+    let res = cont + total;
+    return res; 
 }

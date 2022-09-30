@@ -120,6 +120,10 @@ func contains_point_internal(nodes: Point*, lenght: felt, x: felt, y: felt) -> f
 }
 
 func contains_all_points(nodes: Point*, lenght: felt, points: Point*, points_lenght: felt) -> felt {
+    if (lenght != points_lenght) {
+        return 0;
+    }
+
     return contains_all_points_internal(nodes, lenght, points, points_lenght);
 }
 
