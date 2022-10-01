@@ -15,15 +15,17 @@ func map_without_obstacles() -> Map {
     return map;
 }
 
-func generate_points_with_obstacles(width: felt, height: felt, obstacles: Point*, obstacles_lenght) -> Point* {
+func generate_points_with_obstacles(width: felt, height: felt, obstacles: Point*, obstacles_lenght) -> (felt, Point*) {
+    alloc_locals;
     let points: Point* = alloc(); 
-    return generate_points_internal(obstacles, obstacles_lenght, points, 0, width, height, 0, 0, 0);
+    generate_points_internal(obstacles, obstacles_lenght, points, 0, width, height, 0, 0, 0);
+    return (width * height, points);
 }
 
-func generate_points_internal(obstacles: Point*, obstacles_lenght: felt, points: Point*, index: felt, width: felt, height: felt, x: felt, y: felt, reset_y: felt) -> Point* {
+func generate_points_internal(obstacles: Point*, obstacles_lenght: felt, points: Point*, index: felt, width: felt, height: felt, x: felt, y: felt, reset_y: felt) {
     // dejo de llamar cuando el contador de reinicio de x es igual a la altura
     if (reset_y == height) {
-        return points;
+        return ();
     }
     // cada vez que y llega al borde, incremento un contador, cuando hice todos los y dejo de incrementar x
     // cuando x es igual al ancho entonces reinicio x a 0 y aumento y + 1
@@ -39,5 +41,6 @@ func generate_points_internal(obstacles: Point*, obstacles_lenght: felt, points:
     
     // return generate_points_internal(obstacles, obstacles_lenght, points, index, width, height, x + 1, y, reset_y);
     // llamado recursivo incrementando x + 1
-    return generate_points_internal(obstacles, obstacles_lenght, points, index + 1, width, height, x + 1, y, reset_y);
+    generate_points_internal(obstacles, obstacles_lenght, points, index + 1, width, height, x + 1, y, reset_y);
+    return ();
 }

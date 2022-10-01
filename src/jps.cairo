@@ -6,8 +6,9 @@ from starkware.cairo.common.dict_access import DictAccess
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.alloc import alloc
+from src.util.condition import _or, _and, _not, _abs
 
-from src.data import Point, Movement, Map, get_point_by_position
+from src.data import Point, Movement, Map, get_point_by_position, get_point_null, is_point_null
 
 @view
 func identify_successors{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (res: felt) {
@@ -95,4 +96,83 @@ func filter_neighbours_if_not_walkable_len(all_neighbours: Point*, all_neighbour
     let total = filter_neighbours_if_not_walkable_len(all_neighbours + Point.SIZE, all_neighbours_len - 1); 
     let res = cont + total;
     return res; 
+}
+
+func jump{range_check_ptr}(x: felt, y: felt, px: felt, py: felt, map: Map, end_node: Point) -> Point {
+    alloc_locals;
+    
+    // fijarse si es caminable el punto (retornar un punto invalido?)
+    let point = get_point_by_position(map, x, y);
+    if(point.walkable == 0) {
+        let point = Point(-1, -1, -1);
+        return point;
+    }
+
+    // si es caminable, fijarse si es el nodo final, pedir el nodo con (x, y)?
+    let node = get_point_by_position(map, x, y);
+    if(node.x == end_node.x and node.y == end_node.y) {
+        return node;
+    }
+
+    // reviso los vecinos forzados de forma diagonal
+    let dx = x - px;
+    let dy = y - py;
+
+    tempvar is_diagonal_move = _and(_abs(dx), _abs(dy));
+    if (is_diagonal_move == 1) {
+        let p1 = get_point_by_position(map, x - dx, y + dy);
+        let p2 = get_point_by_position(map, x - dx, y);
+        let p3 = get_point_by_position(map, x + dx, y - dy);
+        let p4 = get_point_by_position(map, x, y - dy);
+
+        let cond1 = _and(p1.walkable, _not(p2.walkable));
+        let cond2 = _and(p3.walkable, _not(p4.walkable));
+        let cond_final = _or(cond1, cond2);
+
+        if(cond_final == 1) {
+            return node;
+        }
+
+        let point_rec_1 = jump(x + dx, y, x, y, map, end_node);
+        if(point_rec_1.x != -1) {
+            return node;
+        }
+
+        let point_rec_2 = jump(x, y + dy, x, y, map, end_node);
+        if(point_rec_2.x != -1) {
+            return node;
+        } 
+        tempvar range_check_ptr = range_check_ptr;
+    } else {
+        if (dx != 0) {
+            let p1 = get_point_by_position(map, x + dx, y + 1);
+            let p2 = get_point_by_position(map, x, y + 1);
+            let p3 = get_point_by_position(map, x + dx, y - 1);
+            let p4 = get_point_by_position(map, x, y - 1);
+
+            let cond1 = _and(p1.walkable, _not(p2.walkable));
+            let cond2 = _and(p3.walkable, _not(p4.walkable));
+            let cond_final = _or(cond1, cond2);
+
+            if(cond_final == 1) {
+                return node;
+            }
+            tempvar range_check_ptr = range_check_ptr;
+        } else {    
+            let p1 = get_point_by_position(map, x + 1, y + dy);
+            let p2 = get_point_by_position(map, x + 1, y);
+            let p3 = get_point_by_position(map, x - 1, y + dy);
+            let p4 = get_point_by_position(map, x - 1, y);
+
+            let cond1 = _and(p1.walkable, _not(p2.walkable));
+            let cond2 = _and(p3.walkable, _not(p4.walkable));
+            let cond_final = _or(cond1, cond2);
+
+            if(cond_final == 1) {
+                return node;
+            }
+            tempvar range_check_ptr = range_check_ptr;
+        }
+    }
+    return jump(x + dx, y + dy, x, y, map, end_node);
 }

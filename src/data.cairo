@@ -3,7 +3,7 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.math_cmp import is_in_range
 from starkware.cairo.common.alloc import alloc
 
-from src.util.condition import _or, _and, _not
+from src.util.condition import _or, _and, _not, _abs
 
 struct Point {
     x: felt,
@@ -140,6 +140,46 @@ func contains_all_points_internal(nodes: Point*, lenght: felt, points: Point*, p
     return contains_all_points_internal(nodes, lenght, points + Point.SIZE, points_lenght - 1);
 }
 
+////
+
+func grid_equals(nodes: Point*, lenght: felt, points: Point*, points_lenght: felt) -> felt {
+    if (lenght != points_lenght) {
+        return 0;
+    }
+
+    return grid_equals_internal(nodes, lenght, points, points_lenght);
+}
+
+func grid_equals_internal(nodes: Point*, lenght: felt, points: Point*, points_lenght: felt) -> felt {
+    if (0 == points_lenght ) {
+        return 1;
+    }
+
+    let not_found_flag = contains_point_equal(nodes, lenght, [points].x, [points].y, [points].walkable); 
+    if (not_found_flag == 0) {
+        return 0;
+    }
+
+    return grid_equals_internal(nodes, lenght, points + Point.SIZE, points_lenght - 1);
+}
+
+func contains_point_equal(nodes: Point*, lenght: felt, x: felt, y: felt, walkable: felt) -> felt {
+    return contains_point_equal_internal(nodes, lenght, x, y, walkable);
+}
+
+func contains_point_equal_internal(nodes: Point*, lenght: felt, x: felt, y: felt, walkable: felt) -> felt {
+    if (0 == lenght) {
+        return 0;
+    }
+
+    if ([nodes].x == x and [nodes].y == y and [nodes].walkable == walkable) {
+        return 1;
+    }
+
+    return contains_point_equal_internal(nodes + Point.SIZE, lenght - 1, x, y, walkable);
+}
+
+///
 
 func prune(nodes: Point*, lenght: felt, parent: Point, direction: felt) -> (Point*, felt) {
     let res: Point* = alloc();
@@ -179,3 +219,15 @@ func prune_diagonal(nodes: Point*, lenght: felt, parent: Point, res: Point*, res
 
 //     let next_mov =  3
 // }
+
+func get_point_null() -> Point {
+    let p = Point(-1, -1, -1); 
+    return p;
+}
+
+func is_point_null(point: Point) -> felt {
+    if (point.x == -1 and point.y == -1 and point.walkable == -1) {
+        return 1;
+    }
+    return 0;
+}

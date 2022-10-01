@@ -1,7 +1,7 @@
 %lang starknet
 from src.jps import identify_successors, get_all_neighbours_of
 from tests.maps.mockedMaps import generate_points_with_obstacles
-from src.data import Point, Movement, Map, get_movement_type, contains_all_points, contains_point, get_point_by_position
+from src.data import Point, Movement, Map, get_movement_type, contains_all_points, contains_point, get_point_by_position, grid_equals
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.find_element import find_element
@@ -199,26 +199,44 @@ func test_get_all_neighbours_of_internal{syscall_ptr: felt*, range_check_ptr, pe
 }
 
 @external
-func test_generate_points() { 
+func test_generate_points{range_check_ptr}() { 
+    alloc_locals;
     let obstacles: Point* = alloc();
     assert obstacles[0] = Point(0, 0, 0);
     assert obstacles[1] = Point(1, 0, 0);
     assert obstacles[2] = Point(1, 1, 0);
 
-    let points: Point* = generate_points_with_obstacles(2, 2, obstacles, 3); 
+    let (points_len: felt, points: Point*) = generate_points_with_obstacles(2, 2, obstacles, 3); 
 
-    let (points_expected: Point*) = alloc();
-    assert points_expected[0] = Point(1, 0, 0);
-    assert points_expected[1] = Point(1, 0, 0);
-    assert points_expected[2] = Point(1, 1, 0);
-    assert points_expected[3] = Point(0, 0, 1);
-
+    // Point(1, 0, 0) -> isWalkeable -> FALSE 
     let point_expected: Point = get_point_by_position(Map(points, 4, 2, 2), 1, 0);
-    let isWalkeable: felt = point_expetected.isWalkeable;
+    let isWalkeable: felt = point_expected.walkable;
     assert isWalkeable = 0;
 
-    let contains = contains_all_points(points, 4, points_expected, 4);
-    assert contains = TRUE;
+    // Point(0, 1, 1) -> isWalkeable -> TRUE
+    let point_expected: Point = get_point_by_position(Map(points, 4, 2, 2), 0, 1);
+    let isWalkeable: felt = point_expected.walkable;
+    assert isWalkeable = 1;
+
+    // points == points_expected
+    let (points_expected: Point*) = alloc();
+    assert points_expected[0] = Point(0, 0, 0);
+    assert points_expected[1] = Point(0, 1, 1);
+    assert points_expected[2] = Point(1, 0, 0);
+    assert points_expected[3] = Point(1, 1, 0);
+
+    let is_equals = grid_equals(points, 4, points_expected, 4);
+    assert is_equals = TRUE;
+
+    // points != points_expected
+    let (points_expected: Point*) = alloc();
+    assert points_expected[0] = Point(0, 0, 0);
+    assert points_expected[1] = Point(0, 1, 1);
+    assert points_expected[2] = Point(1, 0, 1);
+    assert points_expected[3] = Point(1, 1, 0);
+
+    let is_equals = grid_equals(points, 4, points_expected, 4);
+    assert is_equals = FALSE;
 
     return ();
 }
