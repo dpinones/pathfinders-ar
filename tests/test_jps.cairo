@@ -1,19 +1,15 @@
 %lang starknet
-from src.jps import identify_successors, get_all_neighbours_of
-from tests.maps.mockedMaps import generate_points_with_obstacles
-from src.data import Point, Movement, Map, get_movement_type, contains_all_points, contains_point, get_point_by_position, grid_equals
+
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.find_element import find_element
 from starkware.cairo.common.bool import TRUE, FALSE
 
-
-@external
-func test_identify_successors{syscall_ptr: felt*, range_check_ptr, pedersen_ptr: HashBuiltin*}() {
-    let (result_after) = identify_successors();
-    assert result_after = 0;
-    return ();
-}
+from src.jps import identify_successors, jump
+from tests.maps.mockedMaps import generate_points_with_obstacles
+from src.models.point import Point, contains_all_points, contains_point_equals_internal
+from src.models.movement import Movement, get_movement_type
+from src.models.map import Map, get_all_neighbours_of, get_inmediate_neighbours, get_point_by_position, grid_equals
 
 @external
 func test_get_movement_type{syscall_ptr: felt*, range_check_ptr, pedersen_ptr: HashBuiltin*}() {
@@ -46,40 +42,16 @@ func test_get_movement_type{syscall_ptr: felt*, range_check_ptr, pedersen_ptr: H
 
 
 @external
-func test_get_all_neighbours_of{syscall_ptr: felt*, range_check_ptr, pedersen_ptr: HashBuiltin*}() {
-    
+func test_get_inmediate_neighbours_happy_path{syscall_ptr: felt*, range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
     // setup map
-    let (points: Point*) = alloc();
-    assert points[0] = Point(0, 0, 1);
-    assert points[1] = Point(1, 0, 1);
-    assert points[2] = Point(2, 0, 1);
-    assert points[3] = Point(3, 0, 1);
-    assert points[4] = Point(4, 0, 1);
-    assert points[5] = Point(0, 1, 1);
-    assert points[6] = Point(1, 1, 1);
-    assert points[7] = Point(2, 1, 1);
-    assert points[8] = Point(3, 1, 1);
-    assert points[9] = Point(4, 1, 1);
-    assert points[10] = Point(0, 2, 1);
-    assert points[11] = Point(1, 2, 1);
-    assert points[12] = Point(2, 2, 1);
-    assert points[13] = Point(3, 2, 1);
-    assert points[14] = Point(4, 2, 1);
-    assert points[15] = Point(0, 3, 1);
-    assert points[16] = Point(1, 3, 1);
-    assert points[17] = Point(2, 3, 1);
-    assert points[18] = Point(3, 3, 1);
-    assert points[19] = Point(4, 3, 1);
-    assert points[20] = Point(0, 4, 1);
-    assert points[21] = Point(1, 4, 1);
-    assert points[22] = Point(2, 4, 1);
-    assert points[23] = Point(3, 4, 1);
-    assert points[24] = Point(4, 4, 1);
+    let points: Point* = alloc();
+    let obstacles: Point* = alloc();
 
+    let (points_len: felt, points: Point*) = generate_points_with_obstacles(5, 5, obstacles, 0); 
     let map = Map(points, 25, 5, 5);
 
-    let (result_after_len, result_after) = get_all_neighbours_of(map, Point(1, 1, 0));
+    let (result_after_len, result_after) = get_inmediate_neighbours(map, 1, 1);
 
     let (points_expected: Point*) = alloc();
     assert points_expected[0] = Point(0, 0, 1);
@@ -94,11 +66,28 @@ func test_get_all_neighbours_of{syscall_ptr: felt*, range_check_ptr, pedersen_pt
     let contains = contains_all_points(result_after, result_after_len, points_expected, 8);
     assert contains = TRUE;
 
-    let (points_not_contain_expected: Point*) = alloc();
-    assert points_not_contain_expected[0] = Point(5, 0, 0);
+    return ();
+}
 
-    let contains_not = contains_all_points(result_after, result_after_len, points_not_contain_expected, 1);
-    assert contains_not = FALSE;
+@external
+func test_get_inmediate_neighbours_corner{syscall_ptr: felt*, range_check_ptr, pedersen_ptr: HashBuiltin*}() {
+    alloc_locals;
+    // setup map
+    let points: Point* = alloc();
+    let obstacles: Point* = alloc();
+
+    let (points_len: felt, points: Point*) = generate_points_with_obstacles(4, 4, obstacles, 0); 
+    let map = Map(points, 16, 4, 4);
+
+    let (result_after_len, result_after) = get_inmediate_neighbours(map, 0, 0);
+
+    let (points_expected: Point*) = alloc();
+    assert points_expected[0] = Point(0, 1, 1);
+    assert points_expected[1] = Point(1, 1, 1);
+    assert points_expected[2] = Point(1, 0, 1);
+
+    let contains = contains_all_points(result_after, result_after_len, points_expected, 3);
+    assert contains = TRUE;
 
     return ();
 }
@@ -237,6 +226,32 @@ func test_generate_points{range_check_ptr}() {
 
     let is_equals = grid_equals(points, 4, points_expected, 4);
     assert is_equals = FALSE;
+
+    return ();
+}
+
+@external
+func test_jump{range_check_ptr}() {
+
+    alloc_locals;
+    let obstacles: Point* = alloc();
+    assert obstacles[0] = Point(1, 2, 0);
+
+    let (points_len: felt, points: Point*) = generate_points_with_obstacles(4, 4, obstacles, 1); 
+    let result_after = jump(1, 1, 0, 1, Map(points, points_len, 4, 4), Point(3, 3, 1));
+    assert result_after = Point(1, 1, 1);
+
+    // sin obstaculos horizontal
+    let obstacles: Point* = alloc();
+    let (points_len: felt, points: Point*) = generate_points_with_obstacles(4, 4, obstacles, 0); 
+    let result_after = jump(1, 1, 0, 1, Map(points, points_len, 4, 4), Point(3, 1, 1));
+    assert result_after = Point(3, 1, 1);
+
+    // sin obstaculos diagonal
+    // let obstacles: Point* = alloc();
+    // let (points_len: felt, points: Point*) = generate_points_with_obstacles(4, 4, obstacles, 0); 
+    // let result_after = jump(1, 1, 0, 0, Map(points, points_len, 4, 4), Point(3, 3, 1));
+    // assert result_after = Point(3, 3, 1);
 
     return ();
 }
