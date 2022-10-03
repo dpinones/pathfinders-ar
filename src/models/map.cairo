@@ -1,13 +1,13 @@
 %lang starknet
 from starkware.cairo.common.alloc import alloc
+from starkware.cairo.common.bool import TRUE, FALSE
 
 from starkware.cairo.common.math_cmp import is_in_range
 from src.models.point import Point, contains_point_equals
-from src.utils.condition import _and
+from src.utils.condition import _and, _equals
 
 struct Map {
     grid: Point*,
-    map_grid_length: felt,
     width: felt,
     height: felt,
 }
@@ -24,7 +24,7 @@ func get_point_by_position{range_check_ptr}(map: Map, x: felt, y: felt) -> Point
         }
     }
 
-    let p = get_point_by_position_internal(map.grid, map.map_grid_length, x, y);
+    let p = get_point_by_position_internal(map.grid, map.width * map.height, x, y);
     return p;
 }
 
@@ -41,27 +41,6 @@ func get_point_by_position_internal(nodes: Point*, lenght: felt, x: felt, y: fel
     }
 
     return get_point_by_position_internal(nodes + Point.SIZE, lenght - 1, x, y);
-}
-
-func grid_equals(nodes: Point*, lenght: felt, points: Point*, points_lenght: felt) -> felt {
-    if (lenght != points_lenght) {
-        return 0;
-    }
-
-    return grid_equals_internal(nodes, lenght, points, points_lenght);
-}
-
-func grid_equals_internal(nodes: Point*, lenght: felt, points: Point*, points_lenght: felt) -> felt {
-    if (0 == points_lenght ) {
-        return 1;
-    }
-
-    let not_found_flag = contains_point_equals(nodes, lenght, [points].x, [points].y, [points].walkable); 
-    if (not_found_flag == 0) {
-        return 0;
-    }
-
-    return grid_equals_internal(nodes, lenght, points + Point.SIZE, points_lenght - 1);
 }
 
 func is_inside_of_map{range_check_ptr}(map: Map, x: felt, y: felt) -> felt {
@@ -143,4 +122,29 @@ func get_inmediate_neighbours_internal{range_check_ptr}(map: Map, x: felt, y: fe
     } else {
         return get_inmediate_neighbours_internal(map, x, y, closed_count + 1, res, res_len, actual_x + 1, actual_y, reset_y);
     }
+}
+
+
+func map_equals(map: Map, other: Map) -> felt {
+    let has_same_height = _equals(map.height, other.height);
+    let has_same_width = _equals(map.width, other.width);
+    let maps_has_same_size = _and(has_same_height, has_same_width);
+    if (maps_has_same_size == FALSE) {
+        return FALSE;
+    }
+
+    return map_equals_internal(map.grid, map.width * map.height, other.grid, other.width * other.height);
+}
+
+func map_equals_internal(nodes: Point*, lenght: felt, points: Point*, points_lenght: felt) -> felt {
+    if (points_lenght == 0) {
+        return 1;
+    }
+
+    let not_found_flag = contains_point_equals(nodes, lenght, [points].x, [points].y, [points].walkable); 
+    if (not_found_flag == 0) {
+        return 0;
+    }
+
+    return map_equals_internal(nodes, lenght, points + Point.SIZE, points_lenght - 1);
 }

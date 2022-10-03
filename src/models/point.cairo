@@ -1,4 +1,5 @@
 %lang starknet
+from starkware.cairo.common.bool import TRUE, FALSE
 
 struct Point {
     x: felt,
@@ -25,12 +26,12 @@ func contains_point(points: Point*, points_lenght: felt, x: felt, y: felt) -> fe
 }
 
 func contains_point_internal(points: Point*, points_lenght: felt, x: felt, y: felt) -> felt {
-    if (0 == points_lenght) {
-        return 0;
+    if (points_lenght == 0) {
+        return FALSE;
     }
 
     if ([points].x == x and [points].y == y) {
-        return 1;
+        return TRUE;
     }
 
     return contains_point_internal(points + Point.SIZE, points_lenght - 1, x, y);
@@ -45,23 +46,23 @@ func contains_point_internal(points: Point*, points_lenght: felt, x: felt, y: fe
 // @return: felt - 1 if points and other contains all points eachother, 0 otherwise
 func contains_all_points(points: Point*, points_lenght: felt, other: Point*, other_lenght: felt) -> felt {
     if (points_lenght != other_lenght) {
-        return 0;
+        return FALSE;
     }
 
     return contains_all_points_internal(points, points_lenght, other, other_lenght);
 }
 
 func contains_all_points_internal(points: Point*, points_lenght: felt, other: Point*, other_lenght: felt) -> felt {
-    if (0 == other_lenght ) {
-        return 1;
+    if (points_lenght == 0) {
+        return TRUE;
     }
 
-    let not_found_flag = contains_point(points, points_lenght, [points].x, [points].y); 
-    if (not_found_flag == 0) {
-        return 0;
+    let founded = contains_point(other, other_lenght, [points].x, [points].y); 
+    if (founded == 0) {
+        return FALSE;
     }
 
-    return contains_all_points_internal(points, points_lenght, other + Point.SIZE, other_lenght - 1);
+    return contains_all_points_internal(points + Point.SIZE, points_lenght - 1, other , other_lenght);
 }
 
 // Check if an array of points contains a point with position (x, y)
@@ -78,12 +79,12 @@ func contains_point_equals(points: Point*, points_lenght: felt, x: felt, y: felt
 }
 
 func contains_point_equals_internal(points: Point*, points_lenght: felt, x: felt, y: felt, walkable: felt) -> felt {
-    if (0 == points_lenght) {
-        return 0;
+    if (points_lenght == 0) {
+        return FALSE;
     }
 
     if ([points].x == x and [points].y == y and [points].walkable == walkable) {
-        return 1;
+        return TRUE;
     }
 
     return contains_point_equals_internal(points + Point.SIZE, points_lenght - 1, x, y, walkable);
