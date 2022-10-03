@@ -15,10 +15,7 @@ from src.jps import jump
 // 3. ~d is a diagonal move and there exists a node z = y +ki~di
 // which lies ki ∈ N steps in direction ~di ∈ { ~d1,~d2} such that z is a jump point from y by condition 1 or condition 2.
 
-// K = 1 (test case in first iteration)
-// Node y is the goal node.
-
-// Giving parent and actual (next) nodes
+// Giving parent (P) and actual (G) 
 // When actual is the goal and call jump()
 // Then method will return actual node as jump point
 // Map:
@@ -27,7 +24,7 @@ from src.jps import jump
 // O O O O
 // O O O O
 @external
-func test_jump_next_node_is_goal{range_check_ptr}() {
+func test_jump_actual_node_is_the_goal{range_check_ptr}() {
     alloc_locals;
     let map = generate_map_without_obstacles(4, 4); 
     let goal = Point(2, 1, TRUE);
@@ -54,7 +51,7 @@ func test_jump_with_horizontal_right_obstacle_in_y_plus_1{range_check_ptr}() {
     assert obstacles[0] = Point(2, 2, FALSE);
 
     let map = generate_map_with_obstacles(4, 4, obstacles, obstacles_len); 
-    let result_after: Point = jump(2, 1, 1, 1, map, Point(3, 3, TRUE));
+    let result_after: Point = jump(2, 1, 1, 1, map, Point(-1, -1, -1));
     assert result_after = Point(2, 1, TRUE);
 
     return ();
@@ -76,7 +73,7 @@ func test_jump_with_horizontal_right_obstacle_in_y_minus_1{range_check_ptr}() {
     assert obstacles[0] = Point(2, 0, FALSE);
 
     let map = generate_map_with_obstacles(4, 4, obstacles, obstacles_len); 
-    let result_after: Point = jump(2, 1, 1, 1, map, Point(3, 3, TRUE));
+    let result_after: Point = jump(2, 1, 1, 1, map, Point(-1, -1, -1));
     assert result_after = Point(2, 1, TRUE);
 
     return ();
@@ -98,8 +95,294 @@ func test_jump_with_horizontal_left_obstacle_in_y_minus_1{range_check_ptr}() {
     assert obstacles[0] = Point(2, 0, FALSE);
 
     let map = generate_map_with_obstacles(4, 4, obstacles, obstacles_len); 
-    let result_after: Point = jump(2, 1, 3, 1, map, Point(3, 3, TRUE));
+    let result_after: Point = jump(2, 1, 3, 1, map, Point(-1, -1, -1));
     assert result_after = Point(2, 1, TRUE);
+
+    return ();
+}
+
+// Giving parent (P) and actual (A) has an obstacle in (y + 1) position
+// When call jump()
+// Then method will return actual node as jump point
+// Map:
+// O O O O
+// O O A P
+// O O X O
+// O O O O
+@external
+func test_jump_with_horizontal_left_obstacle_in_y_plus_1{range_check_ptr}() {
+    alloc_locals;
+    let obstacles: Point* = alloc();
+    let obstacles_len = 1;
+    assert obstacles[0] = Point(2, 2, FALSE);
+
+    let map = generate_map_with_obstacles(4, 4, obstacles, obstacles_len); 
+    let result_after: Point = jump(2, 1, 3, 1, map, Point(-1, -1, -1));
+    assert result_after = Point(2, 1, TRUE);
+
+    return ();
+}
+
+// Giving parent (P) and actual (A) has an obstacle in (x + 1) position
+// When call jump()
+// Then method will return actual node as jump point
+// Map:
+// O O O O
+// O P O O
+// O A X O
+// O O O O
+@external
+func test_jump_with_vertical_down_obstacle_in_x_plus_1{range_check_ptr}() {
+    alloc_locals;
+    let obstacles: Point* = alloc();
+    let obstacles_len = 1;
+    assert obstacles[0] = Point(2, 2, FALSE);
+
+    let map = generate_map_with_obstacles(4, 4, obstacles, obstacles_len); 
+    let result_after: Point = jump(1, 2, 1, 1, map, Point(-1, -1, -1));
+    assert result_after = Point(1, 2, TRUE);
+
+    return ();
+}
+
+// Giving parent (P) and actual (A) has an obstacle in (x - 1) position
+// When call jump()
+// Then method will return actual node as jump point
+// Map:
+// O O O O
+// O P O O
+// X A O O
+// O O O O
+@external
+func test_jump_with_vertical_down_obstacle_in_x_minus_1{range_check_ptr}() {
+    alloc_locals;
+    let obstacles: Point* = alloc();
+    let obstacles_len = 1;
+    assert obstacles[0] = Point(0, 2, FALSE);
+
+    let map = generate_map_with_obstacles(4, 4, obstacles, obstacles_len); 
+    let result_after: Point = jump(1, 2, 1, 1, map, Point(-1, -1, -1));
+    assert result_after = Point(1, 2, TRUE);
+
+    return ();
+}
+
+// Giving parent (P) and actual (A) has an obstacle in (x - 1) position
+// When call jump()
+// Then method will return actual node as jump point
+// Map:
+// O O O O
+// O A X O
+// O P O O
+// O O O O
+@external
+func test_jump_with_vertical_up_obstacle_in_x_plus_1{range_check_ptr}() {
+    alloc_locals;
+    let obstacles: Point* = alloc();
+    let obstacles_len = 1;
+    assert obstacles[0] = Point(2, 1, FALSE);
+
+    let map = generate_map_with_obstacles(4, 4, obstacles, obstacles_len); 
+    let result_after: Point = jump(1, 1, 1, 2, map, Point(-1, -1, -1));
+    assert result_after = Point(1, 1, TRUE);
+
+    return ();
+}
+
+// Giving parent (P) and actual (A) has an obstacle in (x - 1) position
+// When call jump()
+// Then method will return actual node as jump point
+// Map:
+// O O O O
+// X A O O
+// O P O O
+// O O O O
+@external
+func test_jump_with_vertical_up_obstacle_in_x_minus_1{range_check_ptr}() {
+    alloc_locals;
+    let obstacles: Point* = alloc();
+    let obstacles_len = 1;
+    assert obstacles[0] = Point(2, 1, FALSE);
+
+    let map = generate_map_with_obstacles(4, 4, obstacles, obstacles_len); 
+    let result_after: Point = jump(1, 1, 1, 2, map, Point(-1, -1, -1));
+    assert result_after = Point(1, 1, TRUE);
+
+    return ();
+}
+
+// Giving parent (P) and actual (A) has an obstacle in (x - 1) position
+// When call jump()
+// Then method will return actual node as jump point
+// Map:
+// O O O O
+// O X A O 
+// O P O O 
+// O O O O
+@external
+func test_jump_with_diagonal_up_right_obstacle_in_x_minus_1{range_check_ptr}() {
+    alloc_locals;
+    let obstacles: Point* = alloc();
+    let obstacles_len = 1;
+    assert obstacles[0] = Point(1, 1, FALSE);
+
+    let map = generate_map_with_obstacles(4, 4, obstacles, obstacles_len); 
+    let result_after: Point = jump(2, 1, 1, 2, map, Point(-1, -1, -1));
+    assert result_after = Point(2, 1, TRUE);
+
+    return ();
+}
+
+// Giving parent (P) and actual (A) has an obstacle in (y + 1) position
+// When call jump()
+// Then method will return actual node as jump point
+// Map:
+// O O O O
+// O O A O 
+// O P X O 
+// O O O O
+@external
+func test_jump_with_diagonal_up_right_obstacle_in_y_plus_1{range_check_ptr}() {
+    alloc_locals;
+    let obstacles: Point* = alloc();
+    let obstacles_len = 1;
+    assert obstacles[0] = Point(2, 2, FALSE);
+
+    let map = generate_map_with_obstacles(4, 4, obstacles, obstacles_len); 
+    let result_after: Point = jump(2, 1, 1, 2, map, Point(-1, -1, -1));
+    assert result_after = Point(2, 1, TRUE);
+
+    return ();
+}
+
+// Giving parent (P) and actual (A) has an obstacle in (x - 1) position
+// When call jump()
+// Then method will return actual node as jump point
+// Map:
+// O O O O
+// O P O O 
+// O X A O 
+// O O O O
+@external
+func test_jump_with_diagonal_down_right_obstacle_in_x_minus_1{range_check_ptr}() {
+    alloc_locals;
+    let obstacles: Point* = alloc();
+    let obstacles_len = 1;
+    assert obstacles[0] = Point(1, 2, FALSE);
+
+    let map = generate_map_with_obstacles(4, 4, obstacles, obstacles_len); 
+    let result_after: Point = jump(2, 2, 1, 1, map, Point(-1, -1, -1));
+    assert result_after = Point(2, 2, TRUE);
+
+    return ();
+}
+
+// Giving parent (P) and actual (A) has an obstacle in (y - 1) position
+// When call jump()
+// Then method will return actual node as jump point
+// Map:
+// O O O O
+// O P X O 
+// O O A O 
+// O O O O
+@external
+func test_jump_with_diagonal_down_right_obstacle_in_y_minus_1{range_check_ptr}() {
+    alloc_locals;
+    let obstacles: Point* = alloc();
+    let obstacles_len = 1;
+    assert obstacles[0] = Point(2, 1, FALSE);
+
+    let map = generate_map_with_obstacles(4, 4, obstacles, obstacles_len); 
+    let result_after: Point = jump(2, 2, 1, 1, map, Point(-1, -1, -1));
+    assert result_after = Point(2, 2, TRUE);
+
+    return ();
+}
+
+// Giving parent (P) and actual (A) has an obstacle in (x + 1) position
+// When call jump()
+// Then method will return actual node as jump point
+// Map:
+// O O O O
+// O A X O 
+// O O P O 
+// O O O O
+@external
+func test_jump_with_diagonal_up_left_obstacle_in_x_plus_1{range_check_ptr}() {
+    alloc_locals;
+    let obstacles: Point* = alloc();
+    let obstacles_len = 1;
+    assert obstacles[0] = Point(2, 1, FALSE);
+
+    let map = generate_map_with_obstacles(4, 4, obstacles, obstacles_len); 
+    let result_after: Point = jump(1, 1, 2, 2, map, Point(-1, -1, -1));
+    assert result_after = Point(1, 1, TRUE);
+
+    return ();
+}
+
+// Giving parent (P) and actual (A) has an obstacle in (y + 1) position
+// When call jump()
+// Then method will return actual node as jump point
+// Map:
+// O O O O
+// O A O O 
+// O X P O 
+// O O O O
+@external
+func test_jump_with_diagonal_up_left_obstacle_in_y_plus_1{range_check_ptr}() {
+    alloc_locals;
+    let obstacles: Point* = alloc();
+    let obstacles_len = 1;
+    assert obstacles[0] = Point(1, 2, FALSE);
+
+    let map = generate_map_with_obstacles(4, 4, obstacles, obstacles_len); 
+    let result_after: Point = jump(1, 1, 2, 2, map, Point(-1, -1, -1));
+    assert result_after = Point(1, 1, TRUE);
+
+    return ();
+}
+
+// Giving parent (P) and actual (A) has an obstacle in (x + 1) position
+// When call jump()
+// Then method will return actual node as jump point
+// Map:
+// O O P O
+// O A X O 
+// O O O O 
+// O O O O
+@external
+func test_jump_with_diagonal_down_left_obstacle_in_x_plus_1{range_check_ptr}() {
+    alloc_locals;
+    let obstacles: Point* = alloc();
+    let obstacles_len = 1;
+    assert obstacles[0] = Point(2, 1, FALSE);
+
+    let map = generate_map_with_obstacles(4, 4, obstacles, obstacles_len); 
+    let result_after: Point = jump(1, 1, 2, 0, map, Point(-1, -1, -1));
+    assert result_after = Point(1, 1, TRUE);
+
+    return ();
+}
+
+// Giving parent (P) and actual (A) has an obstacle in (y - 1) position
+// When call jump()
+// Then method will return actual node as jump point
+// Map:
+// O X P O
+// O A O O 
+// O O O O 
+// O O O O
+@external
+func test_jump_with_diagonal_down_left_obstacle_in_y_minus_1{range_check_ptr}() {
+    alloc_locals;
+    let obstacles: Point* = alloc();
+    let obstacles_len = 1;
+    assert obstacles[0] = Point(1, 0, FALSE);
+
+    let map = generate_map_with_obstacles(4, 4, obstacles, obstacles_len); 
+    let result_after: Point = jump(1, 1, 2, 0, map, Point(-1, -1, -1));
+    assert result_after = Point(1, 1, TRUE);
 
     return ();
 }
