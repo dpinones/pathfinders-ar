@@ -6,7 +6,7 @@ from starkware.cairo.common.alloc import alloc
 from src.utils.condition import _or, _and, _not, _abs
 from src.models.point import Point
 from src.models.movement import Movement
-from src.models.map import Map, get_point_by_position, get_all_neighbours_of, is_inside_of_map
+from src.models.map import Map, get_point_by_position, get_neighbours, is_inside_of_map
 
 func identify_successors() -> (res: felt) {
     // let (successors: Point*) = alloc();

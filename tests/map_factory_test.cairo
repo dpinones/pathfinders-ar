@@ -5,7 +5,7 @@ from starkware.cairo.common.bool import FALSE, TRUE
 
 from src.models.point import Point, contains_point
 from src.models.map import Map, get_point_by_position, map_equals
-from src.utils.factory.map_factory import generate_map_with_obstacles, generate_map_without_obstacles
+from src.utils.map_factory import generate_map_with_obstacles, generate_map_without_obstacles
 
 // Giving width = 3, height = 3,
 // When call generate_map_without_obstacles(),

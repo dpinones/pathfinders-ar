@@ -89,3 +89,31 @@ func contains_point_equals_internal(points: Point*, points_lenght: felt, x: felt
 
     return contains_point_equals_internal(points + Point.SIZE, points_lenght - 1, x, y, walkable);
 }
+
+// Check if two arrays has the same points and walkables values
+//
+// @param: points - The array of points
+// @param: points_lenght - The lenght of points
+// @param: other - The array of points to compare
+// @param: other_lenght - The lenght of other
+// @return: felt - 1 if points and other contains all points eachother, 0 otherwise
+func contains_all_points_equals(points: Point*, points_lenght: felt, other: Point*, other_lenght: felt) -> felt {
+    if (points_lenght != other_lenght) {
+        return FALSE;
+    }
+
+    return contains_all_points_equals_internal(points, points_lenght, other, other_lenght);
+}
+
+func contains_all_points_equals_internal(points: Point*, points_lenght: felt, other: Point*, other_lenght: felt) -> felt {
+    if (points_lenght == 0) {
+        return TRUE;
+    }
+
+    let founded = contains_point_equals(other, other_lenght, [points].x, [points].y, [points].walkable); 
+    if (founded == 0) {
+        return FALSE;
+    }
+
+    return contains_all_points_internal(points + Point.SIZE, points_lenght - 1, other , other_lenght);
+}

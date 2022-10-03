@@ -28,19 +28,19 @@ func get_point_by_position{range_check_ptr}(map: Map, x: felt, y: felt) -> Point
     return p;
 }
 
-func get_point_by_position_internal(nodes: Point*, lenght: felt, x: felt, y: felt) -> Point {
+func get_point_by_position_internal(grid: Point*, lenght: felt, x: felt, y: felt) -> Point {
     if (lenght == 0) {
-        with_attr error_message("Point ({x}, {y}) was not found in nodes.") {
+        with_attr error_message("Point ({x}, {y}) was not found in grid.") {
             assert 1 = 0;
         }
     }
 
-    if ([nodes].x == x and [nodes].y == y) {
-        tempvar res = Point([nodes].x, [nodes].y, [nodes].walkable);
+    if ([grid].x == x and [grid].y == y) {
+        tempvar res = Point([grid].x, [grid].y, [grid].walkable);
         return res;
     }
 
-    return get_point_by_position_internal(nodes + Point.SIZE, lenght - 1, x, y);
+    return get_point_by_position_internal(grid + Point.SIZE, lenght - 1, x, y);
 }
 
 func is_inside_of_map{range_check_ptr}(map: Map, x: felt, y: felt) -> felt {
@@ -52,15 +52,45 @@ func is_inside_of_map{range_check_ptr}(map: Map, x: felt, y: felt) -> felt {
     return res;
 }
 
-func get_all_neighbours_of{range_check_ptr}(map: Map, node: Point) -> (len_res: felt, res: Point*) {
+func get_neighbours{range_check_ptr}(map: Map, grid: Point) -> (len_res: felt, res: Point*) {
     alloc_locals;
-    let (all_neighbours_len: felt, all_neighbours: Point*) = get_inmediate_neighbours(map, node.x, node.y);
+   // let (all_neighbours_len: felt, all_neighbours: Point*) = get_inmediate_neighbours(map, grid.x, grid.y);
 
-    let filtered_neighbours: Point* = alloc();
-    filter_neighbours_if_not_walkable(all_neighbours, 8, filtered_neighbours, 0);
-    let filtered_neighbours_len =  filter_neighbours_if_not_walkable_len(all_neighbours, 8);
+    // let filtered_neighbours: Point* = alloc();
+    // filter_neighbours_if_not_walkable(all_neighbours, 8, filtered_neighbours, 0);
+    // let filtered_neighbours_len =  filter_neighbours_if_not_walkable_len(all_neighbours, 8);
 
-    return (filtered_neighbours_len, filtered_neighbours);
+    // return (filtered_neighbours_len, filtered_neighbours);
+    return get_neighbours_without_out_of_range(map, grid.x, grid.y);
+}
+
+func get_neighbours_without_out_of_range{range_check_ptr}(map: Map, x: felt, y: felt) -> (felt, Point*) {
+    let res: Point* = alloc();
+    return get_neighbours_without_out_of_range_internal{range_check_ptr=range_check_ptr}(map, x, y, 0, res, 0, -1, -1, 0);
+}
+
+func get_neighbours_without_out_of_range_internal{range_check_ptr}(map: Map, x: felt, y: felt, closed_count: felt, res: Point*, res_len: felt, actual_x: felt, actual_y: felt, reset_y: felt) -> (felt, Point*) { 
+    alloc_locals;
+    if (reset_y == 2 and actual_x == 2) {
+        return (res_len, res);
+    }
+
+    if (actual_x == 2) {
+        return get_neighbours_without_out_of_range_internal(map, x, y, closed_count + 1, res, res_len, -1, actual_y + 1, reset_y + 1);
+    }
+
+    if (actual_x == 0 and actual_y == 0) {
+        return get_neighbours_without_out_of_range_internal(map, x, y, closed_count + 1, res, res_len, actual_x + 1, actual_y, reset_y);
+    }
+
+    let inside_of_map = is_inside_of_map(map, x + actual_x, y + actual_y);
+    if (inside_of_map == 1) {
+        let temp = get_point_by_position(map, x + actual_x, y + actual_y);
+        assert res[res_len] = Point(temp.x, temp.y, temp.walkable);
+        return get_neighbours_without_out_of_range_internal(map, x, y, closed_count + 1, res, res_len + 1, actual_x + 1, actual_y, reset_y);
+    } else {
+        return get_neighbours_without_out_of_range_internal(map, x, y, closed_count + 1, res, res_len, actual_x + 1, actual_y, reset_y);
+    }
 }
 
 func filter_neighbours_if_not_walkable(all_neighbours: Point*, all_neighbours_len: felt, filtered_neighbours: Point*, idx_filtered_neighbours: felt) {
@@ -94,36 +124,6 @@ func filter_neighbours_if_not_walkable_len(all_neighbours: Point*, all_neighbour
     let res = cont + total;
     return res; 
 }
-
-func get_inmediate_neighbours{range_check_ptr}(map: Map, x: felt, y: felt) -> (felt, Point*) {
-    let res: Point* = alloc();
-    return get_inmediate_neighbours_internal{range_check_ptr=range_check_ptr}(map, x, y, 0, res, 0, -1, -1, 0);
-}
-
-func get_inmediate_neighbours_internal{range_check_ptr}(map: Map, x: felt, y: felt, closed_count: felt, res: Point*, res_len: felt, actual_x: felt, actual_y: felt, reset_y: felt) -> (felt, Point*) { 
-    alloc_locals;
-    if (reset_y == 2 and actual_x == 2) {
-        return (res_len, res);
-    }
-
-    if (actual_x == 2) {
-        return get_inmediate_neighbours_internal(map, x, y, closed_count + 1, res, res_len, -1, actual_y + 1, reset_y + 1);
-    }
-
-    if (actual_x == 0 and actual_y == 0) {
-        return get_inmediate_neighbours_internal(map, x, y, closed_count + 1, res, res_len, actual_x + 1, actual_y, reset_y);
-    }
-
-    let inside_of_map = is_inside_of_map(map, x + actual_x, y + actual_y);
-    if (inside_of_map == 1) {
-        let temp = get_point_by_position(map, x + actual_x, y + actual_y);
-        assert res[res_len] = Point(temp.x, temp.y, temp.walkable);
-        return get_inmediate_neighbours_internal(map, x, y, closed_count + 1, res, res_len + 1, actual_x + 1, actual_y, reset_y);
-    } else {
-        return get_inmediate_neighbours_internal(map, x, y, closed_count + 1, res, res_len, actual_x + 1, actual_y, reset_y);
-    }
-}
-
 
 func map_equals(map: Map, other: Map) -> felt {
     let has_same_height = _equals(map.height, other.height);
