@@ -18,7 +18,7 @@ func identify_successors() -> (res: felt) {
 }
 
 func prune{range_check_ptr}(map: Map, node: Point, movement: Movement, neighbours: Point*) -> (res: Point*) {
-    let (len_res, all_neighbours: Point*) = get_all_neighbours_of(map, node);
+    let (len_res, all_neighbours: Point*) = get_neighbours(map, node);
     let (res: Point*) = alloc();
     return (res,);
 }
@@ -42,11 +42,6 @@ func jump{range_check_ptr}(x: felt, y: felt, px: felt, py: felt, map: Map, end_n
     // si es caminable, fijarse si es el nodo final, pedir el nodo con (x, y)?
     let node = get_point_by_position(map, x, y);
 
-    // assert node.x = 100;
-    // assert node.y = 100;
-    // assert end_node.x = 100;
-    // assert end_node.y = 100;
-    
     if(node.x == end_node.x and node.y == end_node.y) {
         return node;
     }
@@ -55,18 +50,15 @@ func jump{range_check_ptr}(x: felt, y: felt, px: felt, py: felt, map: Map, end_n
     let dx = x - px;
     let dy = y - py;
 
-    // assert dx = 100;
-    // assert dy = 100;
-
-    // tempvar is_diagonal_move = _and(_abs(dx), _abs(dy));
-    // assert is_diagonal_move = 100;
+    
 
     // if (dx !== 0 && dy !== 0) {
-    let cond_1 = is_not_zero(dx);
-    let cond_2 = is_not_zero(dy);
-    let is_diagonal_move = _and(cond_1, cond_2); 
+    // let cond_1 = is_not_zero(dx);
+    // let cond_2 = is_not_zero(dy);
+    // let is_diagonal_move = _and(cond_1, cond_2); 
 
     // if (is_diagonal_move == 1) {
+    tempvar is_diagonal_move = _and(_abs(dx), _abs(dy));
     if (is_diagonal_move == 1) {
         let p1 = get_point_by_position(map, x - dx, y + dy);
         let p2 = get_point_by_position(map, x - dx, y);
@@ -77,7 +69,6 @@ func jump{range_check_ptr}(x: felt, y: felt, px: felt, py: felt, map: Map, end_n
         let cond2 = _and(p3.walkable, _not(p4.walkable));
         let cond_final = _or(cond1, cond2);
 
-        // assert cond_final = 100;
         if(cond_final == 1) {
             return node;
         }
