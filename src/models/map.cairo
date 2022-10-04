@@ -3,11 +3,12 @@ from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.bool import TRUE, FALSE
 
 from starkware.cairo.common.math_cmp import is_in_range
-from src.models.point import Point, contains_point_equals
+from src.models.point import Point, contains_point, contains_point_equals
 from src.utils.condition import _and, _equals
 
 struct Map {
-    grid: Point*,
+    obstacles: Point*,
+    obstacles_lenght: felt,
     width: felt,
     height: felt,
 }
@@ -24,24 +25,46 @@ func get_point_by_position{range_check_ptr}(map: Map, x: felt, y: felt) -> Point
         }
     }
 
-    let p = get_point_by_position_internal(map.grid, map.width * map.height, x, y);
-    return p;
+    let is_inside_of_obstacles = contains_point(map.obstacles, map.obstacles_lenght, x, y);
+    if (is_inside_of_obstacles == TRUE) {
+        let point = Point(x, y, FALSE);
+        return point;
+    } else {
+        let point = Point(x, y, TRUE);
+        return point;
+    }
 }
 
-func get_point_by_position_internal(grid: Point*, lenght: felt, x: felt, y: felt) -> Point {
-    if (lenght == 0) {
-        with_attr error_message("Point ({x}, {y}) was not found in grid.") {
-            assert 1 = 0;
-        }
-    }
+// func get_point_by_position{range_check_ptr}(map: Map, x: felt, y: felt) -> Point {
+//     alloc_locals;
+//     let is_in_range_x = is_in_range(x, 0, map.width);
+//     let is_in_range_y = is_in_range(y, 0, map.height);
 
-    if ([grid].x == x and [grid].y == y) {
-        tempvar res = Point([grid].x, [grid].y, [grid].walkable);
-        return res;
-    }
+//     let is_in_map = is_inside_of_map(map, x, y); 
+//     if (is_in_map == 0) {
+//         with_attr error_message("Point ({x}, {y}) is out of map range.") {
+//             assert 1 = 0;
+//         }
+//     }
 
-    return get_point_by_position_internal(grid + Point.SIZE, lenght - 1, x, y);
-}
+//     let p = get_point_by_position_internal(map.grid, map.width * map.height, x, y);
+//     return p;
+// }
+
+// func get_point_by_position_internal(grid: Point*, lenght: felt, x: felt, y: felt) -> Point {
+//     if (lenght == 0) {
+//         with_attr error_message("Point ({x}, {y}) was not found in grid.") {
+//             assert 1 = 0;
+//         }
+//     }
+
+//     if ([grid].x == x and [grid].y == y) {
+//         tempvar res = Point([grid].x, [grid].y, [grid].walkable);
+//         return res;
+//     }
+
+//     return get_point_by_position_internal(grid + Point.SIZE, lenght - 1, x, y);
+// }
 
 func is_inside_of_map{range_check_ptr}(map: Map, x: felt, y: felt) -> felt {
     let is_in_range_x = is_in_range(x, 0, map.width);
@@ -143,22 +166,27 @@ func map_equals(map: Map, other: Map) -> felt {
     let has_same_height = _equals(map.height, other.height);
     let has_same_width = _equals(map.width, other.width);
     let maps_has_same_size = _and(has_same_height, has_same_width);
+    
     if (maps_has_same_size == FALSE) {
         return FALSE;
     }
 
-    return map_equals_internal(map.grid, map.width * map.height, other.grid, other.width * other.height);
+    if (map.obstacles_lenght != other.obstacles_lenght) {
+        return FALSE;
+    }
+
+    return map_equals_internal(map.obstacles, map.obstacles_lenght, other.obstacles, other.obstacles_lenght);
 }
 
-func map_equals_internal(nodes: Point*, lenght: felt, points: Point*, points_lenght: felt) -> felt {
-    if (points_lenght == 0) {
-        return 1;
+func map_equals_internal(obstacles: Point*, obstacles_lenght: felt, other_obstacles: Point*, other_obstacles_lenght: felt) -> felt {
+    if (other_obstacles_lenght == 0) {
+        return TRUE;
     }
 
-    let not_found_flag = contains_point_equals(nodes, lenght, [points].x, [points].y, [points].walkable); 
-    if (not_found_flag == 0) {
-        return 0;
+    let contains_point_in_obstacles_array = contains_point_equals(obstacles, obstacles_lenght, [other_obstacles].x, [other_obstacles].y, [other_obstacles].walkable); 
+    if (contains_point_in_obstacles_array == FALSE) {
+        return FALSE;
     }
 
-    return map_equals_internal(nodes, lenght, points + Point.SIZE, points_lenght - 1);
+    return map_equals_internal(obstacles, obstacles_lenght, other_obstacles + Point.SIZE, other_obstacles_lenght - 1);
 }
