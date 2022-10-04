@@ -83,10 +83,9 @@ func jump{range_check_ptr}(x: felt, y: felt, px: felt, py: felt, map: Map, end_n
     alloc_locals;
 
     let is_walkable = is_walkable_at(map, x, y);
-    
     if (is_walkable == FALSE) {
-        let point = Point(-1, -1, -1);
-        return point;
+        tempvar invalid_point = Point(-1, -1, -1);
+        return invalid_point;
     }
     
     let node = get_point_by_position(map, x, y);
@@ -94,31 +93,33 @@ func jump{range_check_ptr}(x: felt, y: felt, px: felt, py: felt, map: Map, end_n
         return node;
     }
 
-    let dx = x - px;
-    let dy = y - py;
+    tempvar dx = x - px;
+    tempvar dy = y - py;
+    tempvar is_diagonal_a_move = _and(_abs(dx), _abs(dy));
 
-    tempvar is_diagonal_move = _and(_abs(dx), _abs(dy));
-    if (is_diagonal_move == 1) {
+    if (is_diagonal_a_move == 1) {
         let p1 = is_walkable_at(map, x - dx, y + dy);
         let p2 = is_walkable_at(map, x - dx, y);
         let p3 = is_walkable_at(map, x + dx, y - dy);
         let p4 = is_walkable_at(map, x, y - dy);
 
-        let cond1 = _and(p1, _not(p2));
-        let cond2 = _and(p3, _not(p4));
-        let cond_final = _or(cond1, cond2);
+        tempvar cond1 = _and(p1, _not(p2));
+        tempvar cond2 = _and(p3, _not(p4));
+        tempvar has_forced_neighbours = _or(cond1, cond2);
 
-        if(cond_final == 1) {
+        if(has_forced_neighbours == TRUE) {
             return node;
         }
 
-        let point_rec_1 = jump(x + dx, y, x, y, map, end_node);
-        if(point_rec_1.x != -1) {
+        // We check if horizontal jump point obtained has not an invalid position in X (could be x, y or walkable value)
+        let horizontal_recursion_point = jump(x + dx, y, x, y, map, end_node);
+        if(horizontal_recursion_point.x != -1) {
             return node;
         }
 
-        let point_rec_2 = jump(x, y + dy, x, y, map, end_node);
-        if(point_rec_2.x != -1) {
+        // We check if vertical jump point obtained has not an invalid position in X (could be x, y or walkable value)
+        let vertical_recursion_point = jump(x, y + dy, x, y, map, end_node);
+        if(vertical_recursion_point.x != -1) {
             return node;
         } 
         tempvar range_check_ptr = range_check_ptr;
@@ -129,11 +130,11 @@ func jump{range_check_ptr}(x: felt, y: felt, px: felt, py: felt, map: Map, end_n
             let p3 = is_walkable_at(map, x + dx, y - 1);
             let p4 = is_walkable_at(map, x, y - 1);
 
-            let cond1 = _and(p1, _not(p2));
-            let cond2 = _and(p3, _not(p4));
-            let cond_final = _or(cond1, cond2);
+            tempvar cond1 = _and(p1, _not(p2));
+            tempvar cond2 = _and(p3, _not(p4));
+            tempvar has_forced_neighbours = _or(cond1, cond2);
 
-            if(cond_final == 1) {
+            if(has_forced_neighbours == TRUE) {
                 return node;
             }
             tempvar range_check_ptr = range_check_ptr;
@@ -143,16 +144,17 @@ func jump{range_check_ptr}(x: felt, y: felt, px: felt, py: felt, map: Map, end_n
             let p3 = is_walkable_at(map, x - 1, y + dy);
             let p4 = is_walkable_at(map, x - 1, y);
 
-            let cond1 = _and(p1, _not(p2));
-            let cond2 = _and(p3, _not(p4));
-            let cond_final = _or(cond1, cond2);
+            local cond1 = _and(p1, _not(p2));
+            local cond2 = _and(p3, _not(p4));
+            tempvar has_forced_neighbours = _or(cond1, cond2);
 
-            if(cond_final == 1) {
+            if(has_forced_neighbours == TRUE) {
                 return node;
             }
             tempvar range_check_ptr = range_check_ptr;
         }
     }
+    // Jump forward in original direction
     return jump(x + dx, y + dy, x, y, map, end_node);
 }
 
