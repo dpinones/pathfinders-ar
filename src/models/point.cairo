@@ -12,6 +12,7 @@ struct PointWithParent {
     y: felt,
     walkable: felt,
     parent: Point*,
+    status: felt,
 }
 
 // Check if an array of points contains a point with position (x, y)
@@ -116,4 +117,11 @@ func contains_all_points_equals_internal(points: Point*, points_lenght: felt, ot
     }
 
     return contains_all_points_internal(points + Point.SIZE, points_lenght - 1, other , other_lenght);
+}
+
+func point_equals(point: Point, other: Point) -> felt{
+    if (point.x == other.x and point.y == other.y and point.walkable == other.walkable) {
+        return TRUE;
+    }
+    return FALSE;
 }

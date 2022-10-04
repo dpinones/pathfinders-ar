@@ -8,13 +8,6 @@ from src.models.map import Map
 from src.utils.map_factory import generate_map_with_obstacles, generate_map_without_obstacles
 from src.jps import jump
 
-// Definition 2. Node y is the jump point from node x, heading in direction ~d, if y minimizes the value k such that y = x+k~d
-// and one of the following conditions holds:
-// 1. Node y is the goal node.
-// 2. Node y has at least one neighbour whose evaluation is forced according to Definition 1.
-// 3. ~d is a diagonal move and there exists a node z = y +ki~di
-// which lies ki ∈ N steps in direction ~di ∈ { ~d1,~d2} such that z is a jump point from y by condition 1 or condition 2.
-
 // Giving parent (P) and actual (G) 
 // When actual is the goal and call jump()
 // Then method will return actual node as jump point

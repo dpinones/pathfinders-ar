@@ -52,6 +52,20 @@ func is_inside_of_map{range_check_ptr}(map: Map, x: felt, y: felt) -> felt {
     return res;
 }
 
+func is_walkable_at{range_check_ptr}(map: Map, x: felt, y: felt) -> felt {
+    let is_in_map = is_inside_of_map(map, x, y);
+    if (is_in_map == FALSE) {
+        return FALSE;
+    }
+
+    let point = get_point_by_position(map, x, y);
+    if (point.walkable == FALSE) {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 func get_neighbours{range_check_ptr}(map: Map, grid: Point) -> (len_res: felt, res: Point*) {
     alloc_locals;
    // let (all_neighbours_len: felt, all_neighbours: Point*) = get_inmediate_neighbours(map, grid.x, grid.y);

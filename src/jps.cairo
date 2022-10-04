@@ -5,25 +5,80 @@ from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.bool import TRUE, FALSE
 
 from src.utils.condition import _or, _and, _not, _abs
-from src.models.point import Point
+from src.models.map import Map, get_point_by_position, get_neighbours, is_inside_of_map, is_walkable_at
 from src.models.movement import Movement
-from src.models.map import Map, get_point_by_position, get_neighbours, is_inside_of_map
+from src.models.point import Point, PointWithParent, point_equals
+from src.models.point_status import OPEN, CLOSED
 
-func identify_successors() -> (res: felt) {
-    // let (successors: Point*) = alloc();
-    // let (neighbours: Point*) = alloc();
+func find_path{range_check_ptr}(start_x: felt, start_y: felt, end_x: felt, end_y: felt, map: Map) -> (felt, PointWithParent*) {
+    alloc_locals;
     
-    // neighbours = prune(x, neighbours);
-    let res = 0;
-    return (res,);
+    let open_list: PointWithParent* = alloc();
+    let open_list_lenght = 0;
+    let end_point = Point(end_x, end_y, TRUE);
+
+    // Check if first and end are walkable
+    local point: PointWithParent;
+    assert point.x = start_x;
+    assert point.y = start_y;
+    assert point.walkable = TRUE; 
+    assert point.status = OPEN;
+
+    assert open_list[0] = point;
+
+    return find_path_internal(map, open_list, open_list_lenght, end_point);
 }
 
-func prune{range_check_ptr}(map: Map, node: Point, movement: Movement, neighbours: Point*) -> (res: Point*) {
-    let (len_res, all_neighbours: Point*) = get_neighbours(map, node);
-    let (res: Point*) = alloc();
-    return (res,);
+func find_path_internal{range_check_ptr}(map: Map, open_list: PointWithParent*, open_list_lenght: felt, goal: Point) -> (felt, PointWithParent*) {
+    if (open_list_lenght == 0) {
+        let empty_list: PointWithParent* = alloc();
+        return (0, empty_list);
+    }
+
+    let node = [open_list];
+    if (node.x == goal.x and node.y == goal.y) {
+        let empty_list: PointWithParent* = alloc();
+        return (0, empty_list);
+        //return build_backtrace(node);
+    }
+
+    identify_successors{open_list = open_list, open_list_lenght = open_list_lenght}(node, goal, map);
+    return find_path_internal(map, open_list, open_list_lenght, goal);
 }
 
+func identify_successors{open_list: PointWithParent*, open_list_lenght: felt, range_check_ptr}(parent: PointWithParent, goal: Point, map: Map) {
+    let point = Point(parent.x, parent.y, parent.walkable);
+    let (neighbours_lenght: felt, neighbours: Point*) = get_neighbours(map, point);
+    return identify_successors_internal(neighbours, neighbours_lenght, parent, goal, map);
+}
+
+func identify_successors_internal{open_list: PointWithParent*, open_list_lenght: felt, range_check_ptr}(neighbours: Point*, neighbours_lenght: felt, parent: PointWithParent, goal: Point, map: Map) {
+    alloc_locals;
+    if (neighbours_lenght == 0) {
+        return ();
+    }
+    let jump_point = jump([neighbours].x, [neighbours].y, parent.x, parent.y, map, goal);
+    let invalid_jump_point = point_equals(jump_point, Point(-1, -1, -1));
+
+    if (invalid_jump_point == FALSE) {
+
+        let jx = jump_point.x;
+        let jy = jump_point.y;
+
+
+
+        
+    }
+
+    return ();
+}
+
+// Definition 2. Node y is the jump point from node x, heading in direction ~d, if y minimizes the value k such that y = x+k~d
+// and one of the following conditions holds:
+// 1. Node y is the goal node.
+// 2. Node y has at least one neighbour whose evaluation is forced according to Definition 1.
+// 3. ~d is a diagonal move and there exists a node z = y +ki~di
+// which lies ki ∈ N steps in direction ~di ∈ { ~d1,~d2} such that z is a jump point from y by condition 1 or condition 2.
 func jump{range_check_ptr}(x: felt, y: felt, px: felt, py: felt, map: Map, end_node: Point) -> Point {
     alloc_locals;
 
@@ -33,23 +88,15 @@ func jump{range_check_ptr}(x: felt, y: felt, px: felt, py: felt, map: Map, end_n
         let point = Point(-1, -1, -1);
         return point;
     }
-
     
     let node = get_point_by_position(map, x, y);
     if(node.x == end_node.x and node.y == end_node.y) {
         return node;
     }
 
-    // reviso los vecinos forzados de forma diagonal
     let dx = x - px;
     let dy = y - py;
 
-    // if (dx !== 0 && dy !== 0) {
-    // let cond_1 = is_not_zero(dx);
-    // let cond_2 = is_not_zero(dy);
-    // let is_diagonal_move = _and(cond_1, cond_2); 
-
-    // if (is_diagonal_move == 1) {
     tempvar is_diagonal_move = _and(_abs(dx), _abs(dy));
     if (is_diagonal_move == 1) {
         let p1 = is_walkable_at(map, x - dx, y + dy);
@@ -109,17 +156,3 @@ func jump{range_check_ptr}(x: felt, y: felt, px: felt, py: felt, map: Map, end_n
     return jump(x + dx, y + dy, x, y, map, end_node);
 }
 
-func is_walkable_at{range_check_ptr}(map: Map, x: felt, y: felt) -> felt {
-
-    let is_in_map = is_inside_of_map(map, x, y);
-    if (is_in_map == FALSE) {
-        return FALSE;
-    }
-
-    let point = get_point_by_position(map, x, y);
-    if (point.walkable == FALSE) {
-        return FALSE;
-    }
-
-    return TRUE;
-}
