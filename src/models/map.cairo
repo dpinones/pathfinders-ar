@@ -60,13 +60,6 @@ func is_walkable_at{range_check_ptr}(map: Map, x: felt, y: felt) -> felt {
 
 func get_neighbours{range_check_ptr}(map: Map, grid: Point) -> (len_res: felt, res: Point*) {
     alloc_locals;
-   // let (all_neighbours_len: felt, all_neighbours: Point*) = get_inmediate_neighbours(map, grid.x, grid.y);
-
-    // let filtered_neighbours: Point* = alloc();
-    // filter_neighbours_if_not_walkable(all_neighbours, 8, filtered_neighbours, 0);
-    // let filtered_neighbours_len =  filter_neighbours_if_not_walkable_len(all_neighbours, 8);
-
-    // return (filtered_neighbours_len, filtered_neighbours);
     return get_neighbours_without_out_of_range(map, grid.x, grid.y);
 }
 

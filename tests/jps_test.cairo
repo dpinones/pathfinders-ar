@@ -2,12 +2,16 @@
 
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.bool import TRUE, FALSE
+from src.models.point_status import OPENED, CLOSED, UNDEFINED
 from starkware.cairo.common.cairo_builtins import HashBuiltin
+from starkware.cairo.common.dict import DictAccess
 
+
+from src.utils.dictionary import create_dict
 from src.models.point import Point
 from src.models.map import Map
 from src.utils.map_factory import generate_map_with_obstacles, generate_map_without_obstacles
-from src.jps import jump
+from src.jps import jump, find_path
 
 // Giving parent (P) and actual (G) 
 // When actual is the goal and call jump()
@@ -380,7 +384,7 @@ func test_jump_with_diagonal_down_left_obstacle_in_y_minus_1{range_check_ptr, pe
 // 8 O O O O O O O O O O O O O O O O O O O O
 // 9 O O O O O O O O O O O O O O O O O O O O
 @external
-func test_jump_with_large_map{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
+func test_jump_with_large_map{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     alloc_locals;
     let obstacles: Point* = alloc();
     let obstacles_len = 29;
@@ -415,9 +419,11 @@ func test_jump_with_large_map{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     assert obstacles[28] = Point(16, 6, FALSE);
 
     //let map = generate_map_with_obstacles(50, 50, obstacles, obstacles_len); 
-    let map = generate_map_with_obstacles(100, 100, obstacles, obstacles_len); 
-    let result_after: Point = jump(3, 6, 2, 5, map, Point(-1, -1, -1));
-    assert result_after = Point(3, 6, TRUE);
+    let map = generate_map_with_obstacles(20, 10, obstacles, obstacles_len); 
+    let dict_ptr: DictAccess* = create_dict(UNDEFINED);
+    let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=dict_ptr}(1, 7, 14, 7, map);
+    //let result_after: Point = jump(3, 6, 2, 5, map, Point(-1, -1, -1));
+    assert result_after_lenght = 123;
 
     // let result_after: Point = jump(4, 6, 3, 6, map, Point(-1, -1, -1));
     // assert result_after = Point(-1, -1, -1);

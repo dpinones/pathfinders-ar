@@ -20,30 +20,3 @@ func generate_map_with_obstacles(width: felt, height: felt, obstacles: Point*, o
 
     return map;
 }
-
-// func generate_grid(width: felt, height: felt, obstacles: Point*, obstacles_lenght) -> (felt, Point*) {
-//     alloc_locals;
-//     let points: Point* = alloc(); 
-//     generate_grid_internal(obstacles, obstacles_lenght, points, 0, width, height, 0, 0, 0);
-//     return ((width * height) - 1, points);
-// }
-
-// func generate_grid_internal(obstacles: Point*, obstacles_lenght: felt, points: Point*, index: felt, width: felt, height: felt, x: felt, y: felt, reset_y: felt) {
-//     alloc_locals;
-//     if (reset_y == height) {
-//         return ();
-//     }
-
-//     if (x == width) {
-//         return generate_grid_internal(obstacles, obstacles_lenght, points, index, width, height, 0, y + 1, reset_y + 1);
-//     }
-//     let obstacles_contains_point = contains_point(obstacles, obstacles_lenght, x, y);
-//     if (obstacles_contains_point == FALSE) {
-//         assert points[index] = create_point(x, y, 0);
-//     } else {
-//         assert points[index] = create_point(x, y, 1);
-//     }
-    
-//     generate_grid_internal(obstacles, obstacles_lenght, points, index + 1, width, height, x + 1, y, reset_y);
-//     return ();
-// }

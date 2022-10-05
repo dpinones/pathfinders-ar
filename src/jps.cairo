@@ -21,7 +21,7 @@ from src.models.point_attribute import STATUS, DISTANCE_TRAVELED, PARENT, DISTAN
 
 func find_path{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*}(start_x: felt, start_y: felt, end_x: felt, end_y: felt, map: Map) -> (felt, Point*) {
     alloc_locals;
-    let attribute_dict_ptr: DictAccess* = create_dict(UNDEFINED);
+    let dict_ptr: DictAccess* = create_dict(UNDEFINED);
     let open_list: Point* = alloc();
     let open_list_lenght = 0;
 
@@ -33,13 +33,14 @@ func find_path{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess
     }
 
     let start_point = Point(start_x, start_y, TRUE);
-    let end_point = Point(start_x, start_y, TRUE);
+    let end_point = Point(end_x, end_y, TRUE);
     
-    set_point_attribute(start_point, STATUS, OPENED);
+    set_point_attribute{dict_ptr=dict_ptr}(start_point, STATUS, OPENED);
 
     assert open_list[0] = start_point;
+    let open_list_lenght = 1;
 
-    return find_path_internal{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=attribute_dict_ptr}(map, open_list, open_list_lenght, end_point);
+    return find_path_internal{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=dict_ptr}(map, open_list, open_list_lenght, end_point);
 }
 
 func find_path_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*}(map: Map, open_list: Point*, open_list_lenght: felt, goal: Point) -> (felt, Point*) {
@@ -58,8 +59,7 @@ func find_path_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: D
 }
 
 func identify_successors{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*, open_list: Point*, open_list_lenght}(parent: Point, goal: Point, map: Map) {
-    let point = Point(parent.x, parent.y, parent.walkable);
-    let (neighbours_lenght: felt, neighbours: Point*) = get_neighbours(map, point);
+    let (neighbours_lenght: felt, neighbours: Point*) = get_neighbours(map, parent);
     return identify_successors_internal(neighbours, neighbours_lenght, parent, goal, map);
 }
 
@@ -99,21 +99,24 @@ func identify_successors_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, d
                 tempvar pedersen_ptr = pedersen_ptr;
                 tempvar range_check_ptr = range_check_ptr;
                 tempvar dict_ptr = dict_ptr;
+                tempvar open_list_lenght = open_list_lenght;
             } else {
                 let jump_h_value = manhattan(abs_value(jump_point.x - goal.x), abs_value(jump_point.y - goal.y));
                 set_point_attribute(jump_point, ESTIMATED_TOTAL_PATH_DISTANCE, jump_g_value + jump_h_value);
                 tempvar pedersen_ptr = pedersen_ptr;
                 tempvar range_check_ptr = range_check_ptr;
                 tempvar dict_ptr = dict_ptr;
+                tempvar open_list_lenght = open_list_lenght;
             }
 
             tempvar pedersen_ptr = pedersen_ptr;
             tempvar range_check_ptr = range_check_ptr;
             tempvar dict_ptr = dict_ptr;
+            tempvar open_list_lenght = open_list_lenght;
             
             if (j_is_not_opened == TRUE) {
                 assert open_list[open_list_lenght] = jump_point;
-                assert open_list_lenght = open_list_lenght + 1;
+                tempvar open_list_lenght = open_list_lenght + 1;
                 set_point_attribute(jump_point, STATUS, OPENED);
 
                 tempvar pedersen_ptr = pedersen_ptr;
@@ -123,16 +126,19 @@ func identify_successors_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, d
                 tempvar pedersen_ptr = pedersen_ptr;
                 tempvar range_check_ptr = range_check_ptr;
                 tempvar dict_ptr = dict_ptr;
+                tempvar open_list_lenght = open_list_lenght;
             }
         } else {
             tempvar pedersen_ptr = pedersen_ptr;
             tempvar range_check_ptr = range_check_ptr;
             tempvar dict_ptr = dict_ptr;
+            tempvar open_list_lenght = open_list_lenght;
         }
     } else {
         tempvar pedersen_ptr = pedersen_ptr;
         tempvar range_check_ptr = range_check_ptr;
         tempvar dict_ptr = dict_ptr;
+        tempvar open_list_lenght = open_list_lenght;
     }
     return identify_successors_internal(neighbours + Point.SIZE, neighbours_lenght - 1, parent, goal, map);
 }
