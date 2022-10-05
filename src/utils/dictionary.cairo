@@ -8,7 +8,7 @@ from starkware.cairo.common.alloc import alloc
 // Credits to: @parketh for the original implementation.
 
 // Returns the value for the specified key in a dictionary.
-func create_dict{range_check_ptr}(initial_value: felt) -> (dict: DictAccess*) {
+func create_dict{range_check_ptr}(initial_value: felt) -> DictAccess* {
     alloc_locals;
     // First create an empty dictionary and finalize it.
     // All keys will be set to value of initial_value.
@@ -19,7 +19,7 @@ func create_dict{range_check_ptr}(initial_value: felt) -> (dict: DictAccess*) {
         dict_accesses_start=dict, dict_accesses_end=dict, default_value=initial_value
     );
 
-    return (dict,);
+    return dict;
 }
 
 // Recursively populates the dictionary with specified key-value pairs.
@@ -34,9 +34,9 @@ func add_entries{dict_ptr: DictAccess*}(keys: felt*, values: felt*, len: felt) {
 }
 
 // Reads entry from dictionary
-func read_entry{dict_ptr: DictAccess*}(key: felt) -> (val: felt) {
+func read_entry{dict_ptr: DictAccess*}(key: felt) -> felt {
     let (val) = dict_read(key=key);
-    return (val,);
+    return val;
 }
 
 // Updates dictionary entry
@@ -45,7 +45,7 @@ func update_entry{dict_ptr: DictAccess*}(key, prev_value, new_value) {
     return ();
 }
 
-// Updates dictionary entry
+// Write dictionary entry
 func write_entry{dict_ptr: DictAccess*}(key, new_value) {
     dict_write(key=key, new_value=new_value);
     return ();

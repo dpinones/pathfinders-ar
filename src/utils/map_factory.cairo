@@ -39,9 +39,9 @@ func generate_map_with_obstacles(width: felt, height: felt, obstacles: Point*, o
 //     }
 //     let obstacles_contains_point = contains_point(obstacles, obstacles_lenght, x, y);
 //     if (obstacles_contains_point == FALSE) {
-//         assert points[index] = Point(x, y, 0);
+//         assert points[index] = create_point(x, y, 0);
 //     } else {
-//         assert points[index] = Point(x, y, 1);
+//         assert points[index] = create_point(x, y, 1);
 //     }
     
 //     generate_grid_internal(obstacles, obstacles_lenght, points, index + 1, width, height, x + 1, y, reset_y);

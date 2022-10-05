@@ -2,6 +2,7 @@
 
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.bool import TRUE, FALSE
+from starkware.cairo.common.cairo_builtins import HashBuiltin
 
 from src.models.point import Point
 from src.models.map import Map
@@ -16,7 +17,7 @@ from src.jps import jump
 // O P G 
 // O O O 
 @external
-func test_jump_actual_node_is_the_goal{range_check_ptr}() {
+func test_jump_actual_node_is_the_goal{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
     let map = generate_map_without_obstacles(3, 3); 
     let goal = Point(2, 1, TRUE);
@@ -35,7 +36,7 @@ func test_jump_actual_node_is_the_goal{range_check_ptr}() {
 // P A O
 // O X O 
 @external
-func test_jump_with_horizontal_right_obstacle_in_y_plus_1{range_check_ptr}() {
+func test_jump_with_horizontal_right_obstacle_in_y_plus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
     let obstacles: Point* = alloc();
     let obstacles_len = 1;
@@ -56,7 +57,7 @@ func test_jump_with_horizontal_right_obstacle_in_y_plus_1{range_check_ptr}() {
 // P A O 
 // O O O 
 @external
-func test_jump_with_horizontal_right_obstacle_in_y_minus_1{range_check_ptr}() {
+func test_jump_with_horizontal_right_obstacle_in_y_minus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
     let obstacles: Point* = alloc();
     let obstacles_len = 1;
@@ -77,7 +78,7 @@ func test_jump_with_horizontal_right_obstacle_in_y_minus_1{range_check_ptr}() {
 // O A P
 // O O O
 @external
-func test_jump_with_horizontal_left_obstacle_in_y_minus_1{range_check_ptr}() {
+func test_jump_with_horizontal_left_obstacle_in_y_minus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
     let obstacles: Point* = alloc();
     let obstacles_len = 1;
@@ -98,7 +99,7 @@ func test_jump_with_horizontal_left_obstacle_in_y_minus_1{range_check_ptr}() {
 // O A P
 // O X O
 @external
-func test_jump_with_horizontal_left_obstacle_in_y_plus_1{range_check_ptr}() {
+func test_jump_with_horizontal_left_obstacle_in_y_plus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
     let obstacles: Point* = alloc();
     let obstacles_len = 1;
@@ -119,7 +120,7 @@ func test_jump_with_horizontal_left_obstacle_in_y_plus_1{range_check_ptr}() {
 // O A X 
 // O O O 
 @external
-func test_jump_with_vertical_down_obstacle_in_x_plus_1{range_check_ptr}() {
+func test_jump_with_vertical_down_obstacle_in_x_plus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
     let obstacles: Point* = alloc();
     let obstacles_len = 1;
@@ -140,7 +141,7 @@ func test_jump_with_vertical_down_obstacle_in_x_plus_1{range_check_ptr}() {
 // X A O 
 // O O O 
 @external
-func test_jump_with_vertical_down_obstacle_in_x_minus_1{range_check_ptr}() {
+func test_jump_with_vertical_down_obstacle_in_x_minus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
     let obstacles: Point* = alloc();
     let obstacles_len = 1;
@@ -161,7 +162,7 @@ func test_jump_with_vertical_down_obstacle_in_x_minus_1{range_check_ptr}() {
 // O A X 
 // O P O 
 @external
-func test_jump_with_vertical_up_obstacle_in_x_plus_1{range_check_ptr}() {
+func test_jump_with_vertical_up_obstacle_in_x_plus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
     let obstacles: Point* = alloc();
     let obstacles_len = 1;
@@ -182,7 +183,7 @@ func test_jump_with_vertical_up_obstacle_in_x_plus_1{range_check_ptr}() {
 // X A O 
 // O P O 
 @external
-func test_jump_with_vertical_up_obstacle_in_x_minus_1{range_check_ptr}() {
+func test_jump_with_vertical_up_obstacle_in_x_minus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
     let obstacles: Point* = alloc();
     let obstacles_len = 1;
@@ -203,7 +204,7 @@ func test_jump_with_vertical_up_obstacle_in_x_minus_1{range_check_ptr}() {
 // O X A 
 // O P O 
 @external
-func test_jump_with_diagonal_up_right_obstacle_in_x_minus_1{range_check_ptr}() {
+func test_jump_with_diagonal_up_right_obstacle_in_x_minus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
     let obstacles: Point* = alloc();
     let obstacles_len = 1;
@@ -224,7 +225,7 @@ func test_jump_with_diagonal_up_right_obstacle_in_x_minus_1{range_check_ptr}() {
 // O A O  
 // P X O 
 @external
-func test_jump_with_diagonal_up_right_obstacle_in_y_plus_1{range_check_ptr}() {
+func test_jump_with_diagonal_up_right_obstacle_in_y_plus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
     let obstacles: Point* = alloc();
     let obstacles_len = 1;
@@ -245,7 +246,7 @@ func test_jump_with_diagonal_up_right_obstacle_in_y_plus_1{range_check_ptr}() {
 // O X A 
 // O O O 
 @external
-func test_jump_with_diagonal_down_right_obstacle_in_x_minus_1{range_check_ptr}() {
+func test_jump_with_diagonal_down_right_obstacle_in_x_minus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
     let obstacles: Point* = alloc();
     let obstacles_len = 1;
@@ -266,7 +267,7 @@ func test_jump_with_diagonal_down_right_obstacle_in_x_minus_1{range_check_ptr}()
 // P X O 
 // O A O 
 @external
-func test_jump_with_diagonal_down_right_obstacle_in_y_minus_1{range_check_ptr}() {
+func test_jump_with_diagonal_down_right_obstacle_in_y_minus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
     let obstacles: Point* = alloc();
     let obstacles_len = 1;
@@ -287,7 +288,7 @@ func test_jump_with_diagonal_down_right_obstacle_in_y_minus_1{range_check_ptr}()
 // A X O 
 // O P O 
 @external
-func test_jump_with_diagonal_up_left_obstacle_in_x_plus_1{range_check_ptr}() {
+func test_jump_with_diagonal_up_left_obstacle_in_x_plus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
     let obstacles: Point* = alloc();
     let obstacles_len = 1;
@@ -308,7 +309,7 @@ func test_jump_with_diagonal_up_left_obstacle_in_x_plus_1{range_check_ptr}() {
 // O A O 
 // O X P 
 @external
-func test_jump_with_diagonal_up_left_obstacle_in_y_plus_1{range_check_ptr}() {
+func test_jump_with_diagonal_up_left_obstacle_in_y_plus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
     let obstacles: Point* = alloc();
     let obstacles_len = 1;
@@ -329,7 +330,7 @@ func test_jump_with_diagonal_up_left_obstacle_in_y_plus_1{range_check_ptr}() {
 // O A X 
 // O O O 
 @external
-func test_jump_with_diagonal_down_left_obstacle_in_x_plus_1{range_check_ptr}() {
+func test_jump_with_diagonal_down_left_obstacle_in_x_plus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
     let obstacles: Point* = alloc();
     let obstacles_len = 1;
@@ -350,7 +351,7 @@ func test_jump_with_diagonal_down_left_obstacle_in_x_plus_1{range_check_ptr}() {
 // O A O 
 // O O O 
 @external
-func test_jump_with_diagonal_down_left_obstacle_in_y_minus_1{range_check_ptr}() {
+func test_jump_with_diagonal_down_left_obstacle_in_y_minus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
     let obstacles: Point* = alloc();
     let obstacles_len = 1;
@@ -379,7 +380,7 @@ func test_jump_with_diagonal_down_left_obstacle_in_y_minus_1{range_check_ptr}() 
 // 8 O O O O O O O O O O O O O O O O O O O O
 // 9 O O O O O O O O O O O O O O O O O O O O
 @external
-func test_jump_with_large_map{range_check_ptr}() {
+func test_jump_with_large_map{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
     let obstacles: Point* = alloc();
     let obstacles_len = 29;
@@ -415,8 +416,8 @@ func test_jump_with_large_map{range_check_ptr}() {
 
     //let map = generate_map_with_obstacles(50, 50, obstacles, obstacles_len); 
     let map = generate_map_with_obstacles(100, 100, obstacles, obstacles_len); 
-    // let result_after: Point = jump(3, 6, 2, 5, map, Point(-1, -1, -1));
-    // assert result_after = Point(3, 6, TRUE);
+    let result_after: Point = jump(3, 6, 2, 5, map, Point(-1, -1, -1));
+    assert result_after = Point(3, 6, TRUE);
 
     // let result_after: Point = jump(4, 6, 3, 6, map, Point(-1, -1, -1));
     // assert result_after = Point(-1, -1, -1);

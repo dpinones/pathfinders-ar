@@ -1,5 +1,13 @@
 %lang starknet
 from starkware.cairo.common.bool import TRUE, FALSE
+from starkware.cairo.common.cairo_builtins import HashBuiltin
+from starkware.cairo.common.dict import DictAccess
+from starkware.cairo.common.hash import hash2
+from starkware.cairo.common.registers import get_fp_and_pc
+
+from src.models.point_status import OPENED, CLOSED, UNDEFINED
+from src.utils.condition import _and, _equals
+from src.utils.dictionary import read_entry, update_entry, write_entry
 
 struct Point {
     x: felt,
@@ -7,12 +15,27 @@ struct Point {
     walkable: felt,
 }
 
-struct PointWithParent {
-    x: felt,
-    y: felt,
-    walkable: felt,
-    parent: Point*,
-    status: felt,
+func get_point_attribute{pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(point: Point, attribute: felt) -> felt {
+    let (point_hash) = hash2{hash_ptr=pedersen_ptr}(point.x, point.y);
+    let (attribute_hash) = hash2{hash_ptr=pedersen_ptr}(point_hash, attribute);
+    let value = read_entry{dict_ptr=dict_ptr}(attribute_hash);
+
+    return value;
+}
+
+func set_point_attribute{pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(point: Point, attribute: felt, new_value: felt) {
+    let (point_hash) = hash2{hash_ptr=pedersen_ptr}(point.x, point.y);
+    let (attribute_hash) = hash2{hash_ptr=pedersen_ptr}(point_hash, attribute);
+    let actual_value = read_entry{dict_ptr=dict_ptr}(attribute);
+
+    if (actual_value == UNDEFINED) {
+        write_entry{dict_ptr=dict_ptr}(attribute_hash, new_value);
+        tempvar pedersen_ptr = pedersen_ptr;
+    } else {
+        update_entry{dict_ptr=dict_ptr}(attribute_hash, actual_value, new_value);
+        tempvar pedersen_ptr = pedersen_ptr;
+    }
+    return ();
 }
 
 // Check if an array of points contains a point with position (x, y)
@@ -119,9 +142,15 @@ func contains_all_points_equals_internal(points: Point*, points_lenght: felt, ot
     return contains_all_points_internal(points + Point.SIZE, points_lenght - 1, other , other_lenght);
 }
 
-func point_equals(point: Point, other: Point) -> felt{
-    if (point.x == other.x and point.y == other.y and point.walkable == other.walkable) {
+func point_equals(point: Point, other: Point) -> felt {
+    tempvar x_equal = _equals(point.x, other.x);
+    tempvar y_equal = _equals(point.y, other.y);
+    tempvar walkable_equal = _equals(point.walkable, other.walkable);
+    tempvar points_are_equals = _and(x_equal, _and(y_equal, walkable_equal));
+
+    if (points_are_equals == TRUE) {
         return TRUE;
+    } else {
+        return FALSE;
     }
-    return FALSE;
 }

@@ -3,56 +3,67 @@ from starkware.cairo.common.math_cmp import is_in_range, is_not_zero
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.bool import TRUE, FALSE
+from starkware.cairo.common.dict import dict_write, dict_update, dict_read, DictAccess
+from starkware.cairo.common.hash import hash2
+from starkware.cairo.common.math import abs_value
 
-from src.utils.condition import _or, _and, _not, _abs
+from src.utils.condition import _or, _and, _not
+from src.utils.dictionary import add_entries, create_dict, read_entry, update_entry, write_entry
+from src.models.heuristic import octile
 from src.models.map import Map, get_point_by_position, get_neighbours, is_inside_of_map, is_walkable_at
 from src.models.movement import Movement
-from src.models.point import Point, PointWithParent, point_equals
-from src.models.point_status import OPEN, CLOSED
+from src.models.point import Point, point_equals, set_point_attribute, get_point_attribute
+from src.models.point_status import OPENED, CLOSED, UNDEFINED
+from src.models.point_attribute import STATUS, G
 
-func find_path{range_check_ptr}(start_x: felt, start_y: felt, end_x: felt, end_y: felt, map: Map) -> (felt, PointWithParent*) {
+
+func find_path{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*}(start_x: felt, start_y: felt, end_x: felt, end_y: felt, map: Map) -> (felt, Point*) {
     alloc_locals;
-    
-    let open_list: PointWithParent* = alloc();
+    let status_dict_ptr: DictAccess* = create_dict(UNDEFINED);
+    let open_list: Point* = alloc();
     let open_list_lenght = 0;
-    let end_point = Point(end_x, end_y, TRUE);
 
-    // Check if first and end are walkable
-    local point: PointWithParent;
-    assert point.x = start_x;
-    assert point.y = start_y;
-    assert point.walkable = TRUE; 
-    assert point.status = OPEN;
+    let start_is_walkable = is_walkable_at(map, start_x, start_y);
+    let end_is_walkable = is_walkable_at(map, end_x, end_y);
+    let start_or_end_are_not_walkable = _or(_not(start_is_walkable), _not(end_is_walkable));
+    if (start_or_end_are_not_walkable == TRUE) {
+        return (open_list_lenght, open_list);
+    }
 
-    assert open_list[0] = point;
+    let start_point = Point(start_x, start_y, TRUE);
+    let end_point = Point(start_x, start_y, TRUE);
+    
+    set_point_attribute(start_point, STATUS, OPENED);
 
-    return find_path_internal(map, open_list, open_list_lenght, end_point);
+    assert open_list[0] = start_point;
+
+    return find_path_internal{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=status_dict_ptr}(map, open_list, open_list_lenght, end_point);
 }
 
-func find_path_internal{range_check_ptr}(map: Map, open_list: PointWithParent*, open_list_lenght: felt, goal: Point) -> (felt, PointWithParent*) {
+func find_path_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*}(map: Map, open_list: Point*, open_list_lenght: felt, goal: Point) -> (felt, Point*) {
     if (open_list_lenght == 0) {
-        let empty_list: PointWithParent* = alloc();
+        let empty_list: Point* = alloc();
         return (0, empty_list);
     }
 
     let node = [open_list];
     if (node.x == goal.x and node.y == goal.y) {
-        let empty_list: PointWithParent* = alloc();
+        let empty_list: Point* = alloc();
         return (0, empty_list);
         //return build_backtrace(node);
     }
 
-    identify_successors{open_list = open_list, open_list_lenght = open_list_lenght}(node, goal, map);
+    identify_successors{open_list=open_list, open_list_lenght=open_list_lenght}(node, goal, map);
     return find_path_internal(map, open_list, open_list_lenght, goal);
 }
 
-func identify_successors{open_list: PointWithParent*, open_list_lenght: felt, range_check_ptr}(parent: PointWithParent, goal: Point, map: Map) {
+func identify_successors{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*, open_list: Point*, open_list_lenght}(parent: Point, goal: Point, map: Map) {
     let point = Point(parent.x, parent.y, parent.walkable);
     let (neighbours_lenght: felt, neighbours: Point*) = get_neighbours(map, point);
     return identify_successors_internal(neighbours, neighbours_lenght, parent, goal, map);
 }
 
-func identify_successors_internal{open_list: PointWithParent*, open_list_lenght: felt, range_check_ptr}(neighbours: Point*, neighbours_lenght: felt, parent: PointWithParent, goal: Point, map: Map) {
+func identify_successors_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*, open_list: Point*, open_list_lenght}(neighbours: Point*, neighbours_lenght: felt, parent: Point, goal: Point, map: Map) {
     alloc_locals;
     if (neighbours_lenght == 0) {
         return ();
@@ -61,16 +72,24 @@ func identify_successors_internal{open_list: PointWithParent*, open_list_lenght:
     let invalid_jump_point = point_equals(jump_point, Point(-1, -1, -1));
 
     if (invalid_jump_point == FALSE) {
+        tempvar jump_status = get_point_attribute(jump_point, STATUS);
+        if (jump_status == CLOSED) {
+            return identify_successors_internal(neighbours + Point.SIZE, neighbours_lenght - 1, parent, goal, map);
+        } 
+        let estimated_distance = octile(abs_value(jump_point.x - [neighbours].x), abs_value(jump_point.y - [neighbours].y)); 
+        let g_value = get_point_attribute([neighbours], G);
+        let next_g = g_value + estimated_distance;
 
-        let jx = jump_point.x;
-        let jy = jump_point.y;
-
-
-
-        
+        tempvar pedersen_ptr = pedersen_ptr;
+        tempvar range_check_ptr = range_check_ptr;
+        tempvar dict_ptr = dict_ptr;
+    } else {
+        // ugh..
+        tempvar pedersen_ptr = pedersen_ptr;
+        tempvar range_check_ptr = range_check_ptr;
+        tempvar dict_ptr = dict_ptr;
     }
-
-    return ();
+    return identify_successors_internal(neighbours + Point.SIZE, neighbours_lenght - 1, parent, goal, map);
 }
 
 // Definition 2. Node y is the jump point from node x, heading in direction ~d, if y minimizes the value k such that y = x+k~d
@@ -79,12 +98,12 @@ func identify_successors_internal{open_list: PointWithParent*, open_list_lenght:
 // 2. Node y has at least one neighbour whose evaluation is forced according to Definition 1.
 // 3. ~d is a diagonal move and there exists a node z = y +ki~di
 // which lies ki ∈ N steps in direction ~di ∈ { ~d1,~d2} such that z is a jump point from y by condition 1 or condition 2.
-func jump{range_check_ptr}(x: felt, y: felt, px: felt, py: felt, map: Map, end_node: Point) -> Point {
+func jump{range_check_ptr, pedersen_ptr: HashBuiltin*}(x: felt, y: felt, px: felt, py: felt, map: Map, end_node: Point) -> Point {
     alloc_locals;
 
     let is_walkable = is_walkable_at(map, x, y);
     if (is_walkable == FALSE) {
-        tempvar invalid_point = Point(-1, -1, -1);
+        let invalid_point = Point(-1, -1, -1);
         return invalid_point;
     }
     
@@ -95,7 +114,7 @@ func jump{range_check_ptr}(x: felt, y: felt, px: felt, py: felt, map: Map, end_n
 
     tempvar dx = x - px;
     tempvar dy = y - py;
-    tempvar is_diagonal_a_move = _and(_abs(dx), _abs(dy));
+    tempvar is_diagonal_a_move = _and(abs_value(dx), abs_value(dy));
 
     if (is_diagonal_a_move == 1) {
         let p1 = is_walkable_at(map, x - dx, y + dy);
@@ -123,6 +142,7 @@ func jump{range_check_ptr}(x: felt, y: felt, px: felt, py: felt, map: Map, end_n
             return node;
         } 
         tempvar range_check_ptr = range_check_ptr;
+        tempvar pedersen_ptr = pedersen_ptr;
     } else {
         if (dx != 0) {
             let p1 = is_walkable_at(map, x + dx, y + 1);
@@ -138,6 +158,7 @@ func jump{range_check_ptr}(x: felt, y: felt, px: felt, py: felt, map: Map, end_n
                 return node;
             }
             tempvar range_check_ptr = range_check_ptr;
+            tempvar pedersen_ptr = pedersen_ptr;
         } else {    
             let p1 = is_walkable_at(map, x + 1, y + dy);
             let p2 = is_walkable_at(map, x + 1, y);
@@ -152,6 +173,7 @@ func jump{range_check_ptr}(x: felt, y: felt, px: felt, py: felt, map: Map, end_n
                 return node;
             }
             tempvar range_check_ptr = range_check_ptr;
+            tempvar pedersen_ptr = pedersen_ptr;
         }
     }
     // Jump forward in original direction

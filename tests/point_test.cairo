@@ -8,7 +8,7 @@ from src.models.point import Point, contains_point, contains_point_equals, conta
 // When call contains_point(),
 // Then the method should return TRUE.
 @external
-func test_contains_point_happy_path() {
+func test_contains_point_happy_path{}() {
     let points: Point* = alloc();
     let points_lenght = 5;
     assert points[0] = Point(0, 0, TRUE);

@@ -35,37 +35,6 @@ func get_point_by_position{range_check_ptr}(map: Map, x: felt, y: felt) -> Point
     }
 }
 
-// func get_point_by_position{range_check_ptr}(map: Map, x: felt, y: felt) -> Point {
-//     alloc_locals;
-//     let is_in_range_x = is_in_range(x, 0, map.width);
-//     let is_in_range_y = is_in_range(y, 0, map.height);
-
-//     let is_in_map = is_inside_of_map(map, x, y); 
-//     if (is_in_map == 0) {
-//         with_attr error_message("Point ({x}, {y}) is out of map range.") {
-//             assert 1 = 0;
-//         }
-//     }
-
-//     let p = get_point_by_position_internal(map.grid, map.width * map.height, x, y);
-//     return p;
-// }
-
-// func get_point_by_position_internal(grid: Point*, lenght: felt, x: felt, y: felt) -> Point {
-//     if (lenght == 0) {
-//         with_attr error_message("Point ({x}, {y}) was not found in grid.") {
-//             assert 1 = 0;
-//         }
-//     }
-
-//     if ([grid].x == x and [grid].y == y) {
-//         tempvar res = Point([grid].x, [grid].y, [grid].walkable);
-//         return res;
-//     }
-
-//     return get_point_by_position_internal(grid + Point.SIZE, lenght - 1, x, y);
-// }
-
 func is_inside_of_map{range_check_ptr}(map: Map, x: felt, y: felt) -> felt {
     let is_in_range_x = is_in_range(x, 0, map.width);
     let is_in_range_y = is_in_range(y, 0, map.height);
