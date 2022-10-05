@@ -10,3 +10,7 @@ func octile{range_check_ptr}(distance_x, distance_y) -> felt {
         return (SQRT2 - 1) * distance_y + distance_x;
     }
 }
+
+func manhattan(distance_x, distance_y) -> felt {
+    return distance_x + distance_y;
+}

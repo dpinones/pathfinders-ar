@@ -1,10 +1,12 @@
 %lang starknet
+from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.bool import TRUE, FALSE
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.dict import DictAccess
 from starkware.cairo.common.hash import hash2
 from starkware.cairo.common.registers import get_fp_and_pc
 
+from src.models.point_attribute import PARENT
 from src.models.point_status import OPENED, CLOSED, UNDEFINED
 from src.utils.condition import _and, _equals
 from src.utils.dictionary import read_entry, update_entry, write_entry
@@ -30,12 +32,11 @@ func set_point_attribute{pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(poin
 
     if (actual_value == UNDEFINED) {
         write_entry{dict_ptr=dict_ptr}(attribute_hash, new_value);
-        tempvar pedersen_ptr = pedersen_ptr;
+        return ();
     } else {
         update_entry{dict_ptr=dict_ptr}(attribute_hash, actual_value, new_value);
-        tempvar pedersen_ptr = pedersen_ptr;
+        return ();
     }
-    return ();
 }
 
 // Check if an array of points contains a point with position (x, y)
@@ -153,4 +154,22 @@ func point_equals(point: Point, other: Point) -> felt {
     } else {
         return FALSE;
     }
+}
+
+func build_reverse_path_from{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*}(point: Point) -> (felt, Point*) {
+    let res: Point* = alloc();
+    return build_reverse_path_from_internal(point, res, 0);
+}
+
+func build_reverse_path_from_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*}(point: Point, result: Point*, result_lenght: felt) -> (felt, Point*) {
+    alloc_locals;
+    let point_parent = get_point_attribute(point, PARENT);
+    if (point_parent == UNDEFINED) {
+        return (result_lenght, result);    
+    }
+    tempvar parent: Point*;
+    parent = cast(point_parent, Point*);
+    assert result[result_lenght] = [parent];
+    
+    return build_reverse_path_from_internal([parent], result, result_lenght + 1);
 }

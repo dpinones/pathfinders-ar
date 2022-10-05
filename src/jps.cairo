@@ -1,25 +1,27 @@
 %lang starknet
-from starkware.cairo.common.math_cmp import is_in_range, is_not_zero
+from starkware.cairo.common.math_cmp import is_in_range, is_not_zero, is_le
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.bool import TRUE, FALSE
 from starkware.cairo.common.dict import dict_write, dict_update, dict_read, DictAccess
 from starkware.cairo.common.hash import hash2
 from starkware.cairo.common.math import abs_value
+from starkware.cairo.common.registers import get_fp_and_pc
 
-from src.utils.condition import _or, _and, _not
+
+from src.utils.condition import _or, _and, _not, _equals
 from src.utils.dictionary import add_entries, create_dict, read_entry, update_entry, write_entry
-from src.models.heuristic import octile
+from src.models.heuristic import octile, manhattan
 from src.models.map import Map, get_point_by_position, get_neighbours, is_inside_of_map, is_walkable_at
 from src.models.movement import Movement
-from src.models.point import Point, point_equals, set_point_attribute, get_point_attribute
+from src.models.point import Point, point_equals, set_point_attribute, get_point_attribute, build_reverse_path_from
 from src.models.point_status import OPENED, CLOSED, UNDEFINED
-from src.models.point_attribute import STATUS, G
+from src.models.point_attribute import STATUS, DISTANCE_TRAVELED, PARENT, DISTANCE_TO_GOAL, ESTIMATED_TOTAL_PATH_DISTANCE
 
 
 func find_path{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*}(start_x: felt, start_y: felt, end_x: felt, end_y: felt, map: Map) -> (felt, Point*) {
     alloc_locals;
-    let status_dict_ptr: DictAccess* = create_dict(UNDEFINED);
+    let attribute_dict_ptr: DictAccess* = create_dict(UNDEFINED);
     let open_list: Point* = alloc();
     let open_list_lenght = 0;
 
@@ -37,7 +39,7 @@ func find_path{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess
 
     assert open_list[0] = start_point;
 
-    return find_path_internal{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=status_dict_ptr}(map, open_list, open_list_lenght, end_point);
+    return find_path_internal{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=attribute_dict_ptr}(map, open_list, open_list_lenght, end_point);
 }
 
 func find_path_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*}(map: Map, open_list: Point*, open_list_lenght: felt, goal: Point) -> (felt, Point*) {
@@ -48,9 +50,7 @@ func find_path_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: D
 
     let node = [open_list];
     if (node.x == goal.x and node.y == goal.y) {
-        let empty_list: Point* = alloc();
-        return (0, empty_list);
-        //return build_backtrace(node);
+        return build_reverse_path_from(node);
     }
 
     identify_successors{open_list=open_list, open_list_lenght=open_list_lenght}(node, goal, map);
@@ -65,26 +65,71 @@ func identify_successors{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: 
 
 func identify_successors_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*, open_list: Point*, open_list_lenght}(neighbours: Point*, neighbours_lenght: felt, parent: Point, goal: Point, map: Map) {
     alloc_locals;
+    let (local __fp__, _) = get_fp_and_pc();
     if (neighbours_lenght == 0) {
         return ();
     }
     let jump_point = jump([neighbours].x, [neighbours].y, parent.x, parent.y, map, goal);
-    let invalid_jump_point = point_equals(jump_point, Point(-1, -1, -1));
+    tempvar invalid_jump_point = point_equals(jump_point, Point(-1, -1, -1));
 
     if (invalid_jump_point == FALSE) {
         tempvar jump_status = get_point_attribute(jump_point, STATUS);
         if (jump_status == CLOSED) {
             return identify_successors_internal(neighbours + Point.SIZE, neighbours_lenght - 1, parent, goal, map);
         } 
-        let estimated_distance = octile(abs_value(jump_point.x - [neighbours].x), abs_value(jump_point.y - [neighbours].y)); 
-        let g_value = get_point_attribute([neighbours], G);
-        let next_g = g_value + estimated_distance;
+        let estimated_distance = manhattan(abs_value(jump_point.x - [neighbours].x), abs_value(jump_point.y - [neighbours].y)); 
+        tempvar g_value = get_point_attribute([neighbours], DISTANCE_TRAVELED);
+        tempvar next_g = g_value + estimated_distance;
 
-        tempvar pedersen_ptr = pedersen_ptr;
-        tempvar range_check_ptr = range_check_ptr;
-        tempvar dict_ptr = dict_ptr;
+        tempvar jump_g_value = get_point_attribute(jump_point, DISTANCE_TRAVELED);
+        tempvar jump_g_is_bigger = is_le(next_g, jump_g_value + 1); // ng < jg
+        tempvar j_is_not_opened = _not(_equals(jump_status, OPENED)); // !opened
+        tempvar is_valid_add_jump_point = _or(jump_g_is_bigger, j_is_not_opened);
+        if (is_valid_add_jump_point == TRUE) {
+            set_point_attribute(jump_point, DISTANCE_TRAVELED, next_g);
+            let address_parent = cast(&parent,felt);
+            set_point_attribute(jump_point, PARENT, address_parent);
+
+            let jump_point_attribute_h = get_point_attribute(jump_point, DISTANCE_TO_GOAL);
+            if (jump_point_attribute_h == UNDEFINED) {
+                let jump_h_value = manhattan(abs_value(jump_point.x - goal.x), abs_value(jump_point.y - goal.y));
+                set_point_attribute(jump_point, DISTANCE_TO_GOAL, jump_h_value);
+                set_point_attribute(jump_point, ESTIMATED_TOTAL_PATH_DISTANCE, jump_g_value + jump_h_value);
+
+                tempvar pedersen_ptr = pedersen_ptr;
+                tempvar range_check_ptr = range_check_ptr;
+                tempvar dict_ptr = dict_ptr;
+            } else {
+                let jump_h_value = manhattan(abs_value(jump_point.x - goal.x), abs_value(jump_point.y - goal.y));
+                set_point_attribute(jump_point, ESTIMATED_TOTAL_PATH_DISTANCE, jump_g_value + jump_h_value);
+                tempvar pedersen_ptr = pedersen_ptr;
+                tempvar range_check_ptr = range_check_ptr;
+                tempvar dict_ptr = dict_ptr;
+            }
+
+            tempvar pedersen_ptr = pedersen_ptr;
+            tempvar range_check_ptr = range_check_ptr;
+            tempvar dict_ptr = dict_ptr;
+            
+            if (j_is_not_opened == TRUE) {
+                assert open_list[open_list_lenght] = jump_point;
+                assert open_list_lenght = open_list_lenght + 1;
+                set_point_attribute(jump_point, STATUS, OPENED);
+
+                tempvar pedersen_ptr = pedersen_ptr;
+                tempvar range_check_ptr = range_check_ptr;
+                tempvar dict_ptr = dict_ptr;
+            } else {
+                tempvar pedersen_ptr = pedersen_ptr;
+                tempvar range_check_ptr = range_check_ptr;
+                tempvar dict_ptr = dict_ptr;
+            }
+        } else {
+            tempvar pedersen_ptr = pedersen_ptr;
+            tempvar range_check_ptr = range_check_ptr;
+            tempvar dict_ptr = dict_ptr;
+        }
     } else {
-        // ugh..
         tempvar pedersen_ptr = pedersen_ptr;
         tempvar range_check_ptr = range_check_ptr;
         tempvar dict_ptr = dict_ptr;

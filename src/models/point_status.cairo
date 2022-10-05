@@ -1,3 +1,3 @@
-const CLOSED = 0;
+const CLOSED = 2;
 const OPENED = 1;
-const UNDEFINED = 2;
+const UNDEFINED = 0;
