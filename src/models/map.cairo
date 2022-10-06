@@ -1,9 +1,12 @@
 %lang starknet
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.bool import TRUE, FALSE
-
 from starkware.cairo.common.math_cmp import is_in_range
-from src.models.point import Point, contains_point, contains_point_equals
+from starkware.cairo.common.dict import DictAccess
+from starkware.cairo.common.cairo_builtins import HashBuiltin
+
+from src.models.point import Point, contains_point, contains_point_equals, get_point_attribute
+from src.models.point_attribute import PARENT, UNDEFINED
 from src.utils.condition import _and, _equals
 
 struct Map {
@@ -58,17 +61,31 @@ func is_walkable_at{range_check_ptr}(map: Map, x: felt, y: felt) -> felt {
     return TRUE;
 }
 
-func get_neighbours{range_check_ptr}(map: Map, grid: Point) -> (len_res: felt, res: Point*) {
+func get_neighbours{range_check_ptr, pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(map: Map, grid: Point) -> (len_res: felt, res: Point*) {
     alloc_locals;
-    return get_neighbours_without_out_of_range(map, grid.x, grid.y);
+    // if grid tiene parent tiro todas las flechas, sino
+    let parent_address = get_point_attribute{pedersen_ptr = pedersen_ptr, dict_ptr = dict_ptr}(grid, PARENT);
+
+    if (parent_address == UNDEFINED) {
+        return get_neighbours_internal(map, grid.x, grid.y);
+    } else {
+        return prune_neighbours(map, grid);
+    }
 }
 
-func get_neighbours_without_out_of_range{range_check_ptr}(map: Map, x: felt, y: felt) -> (felt, Point*) {
+func prune_neighbours{range_check_ptr, pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(map: Map, point: Point) -> (felt, Point*) {
     let res: Point* = alloc();
-    return get_neighbours_without_out_of_range_internal{range_check_ptr=range_check_ptr}(map, x, y, 0, res, 0, -1, -1, 0);
+    let len_res = 0;
+
+    return (len_res, res);
 }
 
-func get_neighbours_without_out_of_range_internal{range_check_ptr}(map: Map, x: felt, y: felt, closed_count: felt, res: Point*, res_len: felt, actual_x: felt, actual_y: felt, reset_y: felt) -> (felt, Point*) { 
+func get_neighbours_internal{range_check_ptr, pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(map: Map, x: felt, y: felt) -> (felt, Point*) {
+    let res: Point* = alloc();
+    return get_neighbours_without_out_of_range_internal(map, x, y, 0, res, 0, -1, -1, 0);
+}
+
+func get_neighbours_without_out_of_range_internal{range_check_ptr, pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(map: Map, x: felt, y: felt, closed_count: felt, res: Point*, res_len: felt, actual_x: felt, actual_y: felt, reset_y: felt) -> (felt, Point*) { 
     alloc_locals;
     if (reset_y == 2 and actual_x == 2) {
         return (res_len, res);

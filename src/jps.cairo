@@ -71,7 +71,6 @@ func identify_successors_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, d
     }
     let jump_point = jump([neighbours].x, [neighbours].y, parent.x, parent.y, map, goal);
     tempvar invalid_jump_point = point_equals(jump_point, Point(-1, -1, -1));
-
     if (invalid_jump_point == FALSE) {
         tempvar jump_status = get_point_attribute(jump_point, STATUS);
         if (jump_status == CLOSED) {
@@ -99,7 +98,7 @@ func identify_successors_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, d
                 tempvar pedersen_ptr = pedersen_ptr;
                 tempvar range_check_ptr = range_check_ptr;
                 tempvar dict_ptr = dict_ptr;
-                tempvar open_list_lenght = open_list_lenght;
+                tempvar open_list_lenght = open_list_lenght + 1;
             } else {
                 let jump_h_value = manhattan(abs_value(jump_point.x - goal.x), abs_value(jump_point.y - goal.y));
                 set_point_attribute(jump_point, ESTIMATED_TOTAL_PATH_DISTANCE, jump_g_value + jump_h_value);
@@ -116,12 +115,12 @@ func identify_successors_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, d
             
             if (j_is_not_opened == TRUE) {
                 assert open_list[open_list_lenght] = jump_point;
-                tempvar open_list_lenght = open_list_lenght + 1;
                 set_point_attribute(jump_point, STATUS, OPENED);
 
                 tempvar pedersen_ptr = pedersen_ptr;
                 tempvar range_check_ptr = range_check_ptr;
                 tempvar dict_ptr = dict_ptr;
+                tempvar open_list_lenght = open_list_lenght;
             } else {
                 tempvar pedersen_ptr = pedersen_ptr;
                 tempvar range_check_ptr = range_check_ptr;

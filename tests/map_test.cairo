@@ -1,9 +1,13 @@
 %lang starknet
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.bool import TRUE, FALSE
+from starkware.cairo.common.dict import DictAccess
+from starkware.cairo.common.cairo_builtins import HashBuiltin
 
 from src.models.map import Map, get_point_by_position, map_equals, is_inside_of_map, get_neighbours
 from src.models.point import Point, contains_point_equals, contains_all_points, contains_all_points_equals
+from src.models.point_status import UNDEFINED
+from src.utils.dictionary import create_dict
 from src.utils.map_factory import generate_map_with_obstacles, generate_map_without_obstacles
 
 // Giving a map and a point that is inside of the map,
@@ -59,7 +63,7 @@ func test_is_inside_of_map_happy_path{range_check_ptr}() {
 // When call is_inside_of_map(),
 // Then the method should return FALSE.
 @external
-func test_is_inside_of_map_point_outside{range_check_ptr}() {
+func test_is_inside_of_map_point_outside{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
     let map = generate_map_without_obstacles(2, 3);
 
@@ -70,11 +74,12 @@ func test_is_inside_of_map_point_outside{range_check_ptr}() {
 }
 
 @external
-func test_get_neighbours_happy_path{range_check_ptr}() {
+func test_get_neighbours_happy_path{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
+    let dict_ptr = create_dict(UNDEFINED);
     let map = generate_map_without_obstacles(3, 3);
 
-    let (points_len, points) = get_neighbours(map, Point(1, 1, TRUE));
+    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(map, Point(1, 1, TRUE));
 
     let points_expected: Point* = alloc();
     let points_expected_len = 8;
@@ -94,11 +99,12 @@ func test_get_neighbours_happy_path{range_check_ptr}() {
 }
 
 @external
-func test_get_neighbours_corner{range_check_ptr}() {
+func test_get_neighbours_corner{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
+    let dict_ptr = create_dict(UNDEFINED);
     let map = generate_map_without_obstacles(3, 3);
 
-    let (points_len, points) = get_neighbours(map, Point(0, 0, TRUE));
+    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(map, Point(0, 0, TRUE));
 
     let points_expected: Point* = alloc();
     let points_expected_len = 3;
@@ -113,8 +119,10 @@ func test_get_neighbours_corner{range_check_ptr}() {
 }
 
 @external
-func test_get_neighbours_middle{range_check_ptr}() {
+func test_get_neighbours_middle{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
+    let dict_ptr = create_dict(UNDEFINED);
+
     let obstacles: Point* = alloc();
     let obstacles_lenght = 3;
     assert obstacles[0] = Point(0, 0, FALSE);
@@ -123,7 +131,7 @@ func test_get_neighbours_middle{range_check_ptr}() {
 
     let map = generate_map_with_obstacles(3, 3, obstacles, obstacles_lenght);
 
-    let (points_len, points) = get_neighbours(map, Point(1, 0, TRUE));
+    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(map, Point(1, 0, TRUE));
 
     let points_expected: Point* = alloc();
     let points_expected_len = 5;
