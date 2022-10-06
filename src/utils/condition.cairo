@@ -37,3 +37,12 @@ func _equals(value: felt, other: felt) -> felt {
         return FALSE;
     }
 }
+
+func _max{range_check_ptr}(value: felt, other: felt) -> felt {
+    let value_is_le = is_le(value, other);
+    if (value_is_le == TRUE) {
+        return other;
+    } else {
+        return value;
+    }
+}

@@ -2,7 +2,8 @@
 
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.bool import TRUE, FALSE
-from src.models.point_status import OPENED, CLOSED, UNDEFINED
+from src.models.point_status import OPENED, CLOSED
+from src.models.point_attribute import UNDEFINED
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.dict import DictAccess
 
@@ -421,12 +422,49 @@ func test_jump_with_large_map{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     //let map = generate_map_with_obstacles(50, 50, obstacles, obstacles_len); 
     let map = generate_map_with_obstacles(20, 10, obstacles, obstacles_len); 
     let dict_ptr: DictAccess* = create_dict(UNDEFINED);
-    let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=dict_ptr}(1, 7, 14, 7, map);
-    //let result_after: Point = jump(3, 6, 2, 5, map, Point(-1, -1, -1));
-    assert result_after_lenght = 123;
+    // let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=dict_ptr}(1, 7, 14, 7, map);
+    let result_after: Point = jump(3, 6, 2, 5, map, Point(-1, -1, -1));
+    // assert result_after_lenght = 123;
 
     // let result_after: Point = jump(4, 6, 3, 6, map, Point(-1, -1, -1));
     // assert result_after = Point(-1, -1, -1);
+
+    return ();
+}
+
+// Map width = 8, height = 8
+//   0 1 2 3 4 5 6 7 
+// 0 O O O O O O O O 
+// 1 O O O O O O O O 
+// 2 O O O O X O O O 
+// 3 O P A O X O M O 
+// 4 O O O O X O O O 
+// 5 O O O O X O O O 
+// 6 O O O O X O O O 
+// 7 O O O O O O O O 
+@external
+func test_jump_with_small_map{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
+    alloc_locals;
+    let obstacles: Point* = alloc();
+    let obstacles_len = 5;
+    assert obstacles[0] = Point(4, 2,  FALSE);
+    assert obstacles[1] = Point(4, 3, FALSE);
+    assert obstacles[2] = Point(4, 4, FALSE);
+    assert obstacles[3] = Point(4, 5, FALSE);
+    assert obstacles[4] = Point(4, 6, FALSE);
+
+    let map = generate_map_with_obstacles(8, 8, obstacles, obstacles_len); 
+    let dict_ptr: DictAccess* = create_dict(UNDEFINED);
+    let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=dict_ptr}(1, 3, 6, 3, map);
+    
+    
+    assert result_after_lenght = 123;
+    // let result_after: Point = jump(2, 3, 1, 4, map, Point(-1, -1, -1));
+    // assert result_after.x = 100;
+
+    // assert result_after = Point(-1, -1, -1);
+
+    // let result_after: Point = jump(4, 6, 3, 6, map, Point(-1, -1, -1));
 
     return ();
 }

@@ -4,10 +4,12 @@ from starkware.cairo.common.bool import TRUE, FALSE
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.dict import DictAccess
 from starkware.cairo.common.hash import hash2
+from starkware.cairo.common.math import unsigned_div_rem
 from starkware.cairo.common.registers import get_fp_and_pc
 
 from src.models.point_attribute import PARENT
-from src.models.point_status import OPENED, CLOSED, UNDEFINED
+from src.models.point_status import OPENED, CLOSED
+from src.models.point_attribute import UNDEFINED
 from src.utils.condition import _and, _equals
 from src.utils.dictionary import read_entry, update_entry, write_entry
 
@@ -37,6 +39,15 @@ func set_point_attribute{pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(poin
         update_entry{dict_ptr=dict_ptr}(attribute_hash, actual_value, new_value);
         return ();
     }
+}
+
+func convert_coords_to_id(x: felt, y: felt, width: felt) -> felt {
+    return x * width + y;
+}
+
+func convert_id_to_coords{range_check_ptr}(id: felt, width: felt) -> (x: felt, y: felt) {
+    let (x, y) = unsigned_div_rem(id, width);
+    return (x, y);
 }
 
 // Check if an array of points contains a point with position (x, y)
@@ -156,20 +167,27 @@ func point_equals(point: Point, other: Point) -> felt {
     }
 }
 
-func build_reverse_path_from{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*}(point: Point) -> (felt, Point*) {
+func build_reverse_path_from{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*}(point: Point, width: felt) -> (felt, Point*) {
     let res: Point* = alloc();
-    return build_reverse_path_from_internal(point, res, 0);
+    assert res[0] = point;
+    return build_reverse_path_from_internal(point, width, res, 1);
 }
 
-func build_reverse_path_from_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*}(point: Point, result: Point*, result_lenght: felt) -> (felt, Point*) {
+func build_reverse_path_from_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*}(point: Point, width: felt, result: Point*, result_lenght: felt) -> (felt, Point*) {
     alloc_locals;
-    let point_parent = get_point_attribute(point, PARENT);
-    if (point_parent == UNDEFINED) {
+    let parent_id = get_point_attribute(point, PARENT);
+    if (parent_id != UNDEFINED) {
+    %{
+        from requests import post
+        json = { # creating the body of the post request so it's printed in the python script
+            "1": f"dentro de boom, parent_id: {ids.parent_id}",
+        }
+        post(url="http://localhost:5000", json=json) # sending the request to our small "server"
+    %}
+        let (x, y) = convert_id_to_coords(parent_id, width);
+        assert result[result_lenght] = Point(x, y, TRUE);
+        return build_reverse_path_from_internal(Point(x, y, TRUE), width, result, result_lenght + 1);
+    } else {
         return (result_lenght, result);    
     }
-    tempvar parent: Point*;
-    parent = cast(point_parent, Point*);
-    assert result[result_lenght] = [parent];
-    
-    return build_reverse_path_from_internal([parent], result, result_lenght + 1);
 }

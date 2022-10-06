@@ -14,9 +14,9 @@ from src.utils.dictionary import add_entries, create_dict, read_entry, update_en
 from src.models.heuristic import octile, manhattan
 from src.models.map import Map, get_point_by_position, get_neighbours, is_inside_of_map, is_walkable_at
 from src.models.movement import Movement
-from src.models.point import Point, point_equals, set_point_attribute, get_point_attribute, build_reverse_path_from
-from src.models.point_status import OPENED, CLOSED, UNDEFINED
-from src.models.point_attribute import STATUS, DISTANCE_TRAVELED, PARENT, DISTANCE_TO_GOAL, ESTIMATED_TOTAL_PATH_DISTANCE
+from src.models.point import Point, point_equals, set_point_attribute, get_point_attribute, build_reverse_path_from, convert_coords_to_id
+from src.models.point_status import OPENED, CLOSED
+from src.models.point_attribute import STATUS, DISTANCE_TRAVELED, PARENT, DISTANCE_TO_GOAL, ESTIMATED_TOTAL_PATH_DISTANCE, UNDEFINED
 
 
 func find_path{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*}(start_x: felt, start_y: felt, end_x: felt, end_y: felt, map: Map) -> (felt, Point*) {
@@ -50,15 +50,17 @@ func find_path_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: D
     }
 
     let node = [open_list];
+
     if (node.x == goal.x and node.y == goal.y) {
-        return build_reverse_path_from(node);
+        return build_reverse_path_from(node, map.width);
     }
 
     identify_successors{open_list=open_list, open_list_lenght=open_list_lenght}(node, goal, map);
-    return find_path_internal(map, open_list, open_list_lenght, goal);
+    return find_path_internal(map, open_list + Point.SIZE, open_list_lenght - 1, goal);
 }
 
 func identify_successors{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*, open_list: Point*, open_list_lenght}(parent: Point, goal: Point, map: Map) {
+    set_point_attribute{pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(parent, STATUS, CLOSED);
     let (neighbours_lenght: felt, neighbours: Point*) = get_neighbours(map, parent);
     return identify_successors_internal(neighbours, neighbours_lenght, parent, goal, map);
 }
@@ -71,8 +73,20 @@ func identify_successors_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, d
     }
     let jump_point = jump([neighbours].x, [neighbours].y, parent.x, parent.y, map, goal);
     tempvar invalid_jump_point = point_equals(jump_point, Point(-1, -1, -1));
+
     if (invalid_jump_point == FALSE) {
+
+
         tempvar jump_status = get_point_attribute(jump_point, STATUS);
+        // %{
+        //     from requests import post
+        //     json = { # creating the body of the post request so it's printed in the python script
+        //         "message": f"Dentro de identify successors  ",
+        //         "open_list_lenght": f"{ids.open_list_lenght}",
+        //         "(x, y)": f"({ids.jump_point.x}, {ids.jump_point.y}) status: {ids.jump_status}"
+        //     }
+        //     post(url="http://localhost:5000", json=json) # sending the request to our small "server"
+        // %}
         if (jump_status == CLOSED) {
             return identify_successors_internal(neighbours + Point.SIZE, neighbours_lenght - 1, parent, goal, map);
         } 
@@ -86,9 +100,9 @@ func identify_successors_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, d
         tempvar is_valid_add_jump_point = _or(jump_g_is_bigger, j_is_not_opened);
         if (is_valid_add_jump_point == TRUE) {
             set_point_attribute(jump_point, DISTANCE_TRAVELED, next_g);
-            let address_parent = cast(&parent,felt);
-            set_point_attribute(jump_point, PARENT, address_parent);
-
+            let parent_id = convert_coords_to_id(parent.x, parent.y, map.width);
+            set_point_attribute(jump_point, PARENT, parent_id);
+            
             let jump_point_attribute_h = get_point_attribute(jump_point, DISTANCE_TO_GOAL);
             if (jump_point_attribute_h == UNDEFINED) {
                 let jump_h_value = manhattan(abs_value(jump_point.x - goal.x), abs_value(jump_point.y - goal.y));
@@ -98,10 +112,9 @@ func identify_successors_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, d
                 tempvar pedersen_ptr = pedersen_ptr;
                 tempvar range_check_ptr = range_check_ptr;
                 tempvar dict_ptr = dict_ptr;
-                tempvar open_list_lenght = open_list_lenght + 1;
+                tempvar open_list_lenght = open_list_lenght;
             } else {
-                let jump_h_value = manhattan(abs_value(jump_point.x - goal.x), abs_value(jump_point.y - goal.y));
-                set_point_attribute(jump_point, ESTIMATED_TOTAL_PATH_DISTANCE, jump_g_value + jump_h_value);
+                set_point_attribute(jump_point, ESTIMATED_TOTAL_PATH_DISTANCE, jump_g_value + jump_point_attribute_h);
                 tempvar pedersen_ptr = pedersen_ptr;
                 tempvar range_check_ptr = range_check_ptr;
                 tempvar dict_ptr = dict_ptr;
@@ -120,7 +133,7 @@ func identify_successors_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, d
                 tempvar pedersen_ptr = pedersen_ptr;
                 tempvar range_check_ptr = range_check_ptr;
                 tempvar dict_ptr = dict_ptr;
-                tempvar open_list_lenght = open_list_lenght;
+                tempvar open_list_lenght = open_list_lenght + 1;
             } else {
                 tempvar pedersen_ptr = pedersen_ptr;
                 tempvar range_check_ptr = range_check_ptr;
@@ -139,6 +152,7 @@ func identify_successors_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, d
         tempvar dict_ptr = dict_ptr;
         tempvar open_list_lenght = open_list_lenght;
     }
+
     return identify_successors_internal(neighbours + Point.SIZE, neighbours_lenght - 1, parent, goal, map);
 }
 
@@ -156,7 +170,6 @@ func jump{range_check_ptr, pedersen_ptr: HashBuiltin*}(x: felt, y: felt, px: fel
         let invalid_point = Point(-1, -1, -1);
         return invalid_point;
     }
-    
     let node = get_point_by_position(map, x, y);
     if(node.x == end_node.x and node.y == end_node.y) {
         return node;
