@@ -1,17 +1,17 @@
 %lang starknet
+
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.bool import TRUE, FALSE
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.dict import DictAccess
 from starkware.cairo.common.hash import hash2
-from starkware.cairo.common.math import unsigned_div_rem
 from starkware.cairo.common.registers import get_fp_and_pc
 
-from src.models.point_attribute import PARENT
-from src.models.point_status import OPENED, CLOSED
-from src.models.point_attribute import UNDEFINED
+from src.constants.point_status import OPENED, CLOSED
+from src.constants.point_attribute import PARENT, UNDEFINED
 from src.utils.condition import _and, _equals
 from src.utils.dictionary import read_entry, update_entry, write_entry
+from src.utils.point_converter import convert_id_to_coords
 
 struct Point {
     x: felt,
@@ -39,15 +39,6 @@ func set_point_attribute{pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(poin
         update_entry{dict_ptr=dict_ptr}(attribute_hash, actual_value, new_value);
         return ();
     }
-}
-
-func convert_coords_to_id(x: felt, y: felt, width: felt) -> felt {
-    return x * width + y;
-}
-
-func convert_id_to_coords{range_check_ptr}(id: felt, width: felt) -> (x: felt, y: felt) {
-    let (x, y) = unsigned_div_rem(id, width);
-    return (x, y);
 }
 
 // Check if an array of points contains a point with position (x, y)
@@ -177,13 +168,6 @@ func build_reverse_path_from_internal{pedersen_ptr: HashBuiltin*, range_check_pt
     alloc_locals;
     let parent_id = get_point_attribute(point, PARENT);
     if (parent_id != UNDEFINED) {
-    // %{
-    //     from requests import post
-    //     json = { # creating the body of the post request so it's printed in the python script
-    //         "1": f"dentro de boom, parent_id: {ids.parent_id}",
-    //     }
-    //     post(url="http://localhost:5000", json=json) # sending the request to our small "server"
-    // %}
         let (x, y) = convert_id_to_coords(parent_id, width);
         assert result[result_lenght] = Point(x, y, TRUE);
         return build_reverse_path_from_internal(Point(x, y, TRUE), width, result, result_lenght + 1);

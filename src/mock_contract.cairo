@@ -6,10 +6,10 @@ from starkware.cairo.common.dict import DictAccess
 from starkware.cairo.common.bool import TRUE, FALSE
 
 from src.models.point import Point
-from src.utils.map_factory import generate_map_static
+from src.utils.map_factory import generate_map
 from src.utils.dictionary import create_dict
-from src.models.point_status import OPENED, CLOSED
-from src.models.point_attribute import UNDEFINED
+from src.constants.point_status import OPENED, CLOSED
+from src.constants.point_attribute import UNDEFINED
 from src.jps import jump, find_path
 
 // Map width = 8, height = 8
@@ -50,7 +50,7 @@ func constructor{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr
                                      0,0,0,1,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
                                      0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0),  felt*);
 
-     let map = generate_map_static(points, 20, 20); 
+     let map = generate_map(points, 20, 20); 
      let dict_ptr: DictAccess* = create_dict(UNDEFINED);
     
     let start_x = 1;

@@ -5,10 +5,12 @@ from starkware.cairo.common.dict import DictAccess
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 
 from src.models.map import Map, get_point_by_position, map_equals, is_inside_of_map, get_neighbours
-from src.models.point import Point, contains_point_equals, contains_all_points, contains_all_points_equals, set_point_attribute, convert_coords_to_id
-from src.models.point_attribute import UNDEFINED, PARENT
+from src.models.point import Point, contains_point_equals, contains_all_points, contains_all_points_equals, set_point_attribute
+from src.constants.point_attribute import UNDEFINED, PARENT
+from src.constants.grid import X, O
 from src.utils.dictionary import create_dict
-from src.utils.map_factory import generate_map_with_obstacles, generate_map_without_obstacles
+from src.utils.point_converter import convert_coords_to_id
+from src.utils.map_factory import generate_map_without_obstacles
 
 // Giving a map and a point that is inside of the map,
 // When call get_point_by_position(),
@@ -16,11 +18,11 @@ from src.utils.map_factory import generate_map_with_obstacles, generate_map_with
 @external
 func test_get_point_by_position_happy_path{range_check_ptr}() {
     alloc_locals;
-    let obstacles: Point* = alloc();
-    let obstacles_lenght = 1;
-    assert obstacles[0] = Point(1, 0, FALSE);
+    tempvar map_grids: felt* = cast(new(O, X, O,
+                                        O, O, O,
+                                        O, O, O),  felt*);
 
-    let map = generate_map_with_obstacles(3, 3, obstacles, obstacles_lenght); 
+    let map = Map(map_grids, 3, 3);
 
     let result = get_point_by_position(map, 1, 0);
     assert result = Point(1, 0, FALSE);
@@ -123,23 +125,17 @@ func test_get_neighbours_middle{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
     let dict_ptr = create_dict(UNDEFINED);
 
-    let obstacles: Point* = alloc();
-    let obstacles_lenght = 3;
-    assert obstacles[0] = Point(0, 0, FALSE);
-    assert obstacles[1] = Point(1, 1, FALSE);
-    assert obstacles[2] = Point(2, 0, FALSE);
-
-    let map = generate_map_with_obstacles(3, 3, obstacles, obstacles_lenght);
+    tempvar map_grids: felt* = cast(new(X, O, X,
+                                        O, X, O,
+                                        O, O, O),  felt*);
+    let map = Map(map_grids, 3, 3);
 
     let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(map, Point(1, 0, TRUE));
 
     let points_expected: Point* = alloc();
-    let points_expected_len = 5;
-    assert points_expected[0] = Point(0, 0, FALSE);
-    assert points_expected[1] = Point(0, 1, TRUE);
-    assert points_expected[2] = Point(1, 1, FALSE);
-    assert points_expected[3] = Point(2, 1, TRUE);
-    assert points_expected[4] = Point(2, 0, FALSE);
+    let points_expected_len = 2;
+    assert points_expected[0] = Point(0, 1, TRUE);
+    assert points_expected[1] = Point(2, 1, TRUE);
 
     let result = contains_all_points_equals(points, points_len, points_expected, points_expected_len);
     assert result = TRUE;
@@ -156,24 +152,21 @@ func test_get_neighbours_with_parent_middle{range_check_ptr, pedersen_ptr: HashB
     alloc_locals;
     let dict_ptr = create_dict(UNDEFINED);
 
-    let obstacles: Point* = alloc();
-    let obstacles_lenght = 2;
-    assert obstacles[0] = Point(0, 0, FALSE);
-    assert obstacles[1] = Point(2, 0, FALSE);
+    tempvar map_grids: felt* = cast(new(X, O, X, O,
+                                        O, O, O, O,
+                                        O, O, O, O,
+                                        O, O, O, O),  felt*);
+    let map = Map(map_grids, 4, 4);
 
-    let map = generate_map_with_obstacles(4, 4, obstacles, obstacles_lenght);
     let point = Point(1, 1, TRUE);
     let parent_id = convert_coords_to_id(0, 1, 4);
-    
     set_point_attribute{pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(point, PARENT, parent_id);
 
     let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(map, point);
 
     let points_expected: Point* = alloc();
-    let points_expected_len = 3;
-    assert points_expected[0] = Point(1, 0, TRUE);
-    assert points_expected[1] = Point(2, 1, TRUE);
-    assert points_expected[2] = Point(1, 2, TRUE);
+    let points_expected_len = 1;
+    assert points_expected[0] = Point(2, 1, TRUE);
 
     let result = contains_all_points_equals(points, points_len, points_expected, points_expected_len);
     assert result = TRUE;
@@ -181,23 +174,20 @@ func test_get_neighbours_with_parent_middle{range_check_ptr, pedersen_ptr: HashB
     return();
 }
 
-
 // X O X O
 // O P O O 
 // O X A O 
 // O O O O
 @external
-func test_get_neighbours_with_parent_middle{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
+func test_get_neighbours_with_parent_middle_diagonal{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
     let dict_ptr = create_dict(UNDEFINED);
 
-    let obstacles: Point* = alloc();
-    let obstacles_lenght = 3;
-    assert obstacles[0] = Point(0, 0, FALSE);
-    assert obstacles[1] = Point(2, 0, FALSE);
-    assert obstacles[2] = Point(1, 2, FALSE);
-
-    let map = generate_map_with_obstacles(4, 4, obstacles, obstacles_lenght);
+    tempvar map_grids: felt* = cast(new(X, O, X, O,
+                                        O, O, O, O,
+                                        O, X, O, O,
+                                        O, O, O, O),  felt*);
+    let map = Map(map_grids, 4, 4);
     let point = Point(2, 2, TRUE);
     let parent_id = convert_coords_to_id(1, 1, 4);
     
@@ -206,10 +196,11 @@ func test_get_neighbours_with_parent_middle{range_check_ptr, pedersen_ptr: HashB
     let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(map, point);
 
     let points_expected: Point* = alloc();
-    let points_expected_len = 3;
-    assert points_expected[0] = Point(1, 0, TRUE);
-    assert points_expected[1] = Point(2, 1, TRUE);
-    assert points_expected[2] = Point(1, 2, TRUE);
+    let points_expected_len = 4;
+    assert points_expected[0] = Point(2, 3, TRUE);
+    assert points_expected[1] = Point(3, 2, TRUE);
+    assert points_expected[2] = Point(3, 3, TRUE);
+    assert points_expected[3] = Point(1, 1, TRUE);
 
     let result = contains_all_points_equals(points, points_len, points_expected, points_expected_len);
     assert result = TRUE;

@@ -2,16 +2,16 @@
 
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.bool import TRUE, FALSE
-from src.models.point_status import OPENED, CLOSED
-from src.models.point_attribute import UNDEFINED
+from src.constants.point_status import OPENED, CLOSED
+from src.constants.point_attribute import UNDEFINED
+from src.constants.grid import X, O
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.dict import DictAccess
-
 
 from src.utils.dictionary import create_dict
 from src.models.point import Point
 from src.models.map import Map
-from src.utils.map_factory import generate_map_with_obstacles, generate_map_without_obstacles
+from src.utils.map_factory import generate_map_without_obstacles
 from src.jps import jump, find_path
 
 // Giving parent (P) and actual (G) 
@@ -43,11 +43,11 @@ func test_jump_actual_node_is_the_goal{range_check_ptr, pedersen_ptr: HashBuilti
 @external
 func test_jump_with_horizontal_right_obstacle_in_y_plus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let obstacles: Point* = alloc();
-    let obstacles_len = 1;
-    assert obstacles[0] = Point(1, 2, FALSE);
+    tempvar map_grids: felt* = cast(new(O, O, O,
+                                        O, O, O,
+                                        O, X, O),  felt*);
+    let map = Map(map_grids, 3, 3);
 
-    let map = generate_map_with_obstacles(3, 3, obstacles, obstacles_len); 
     let result_after: Point = jump(1, 1, 0, 1, map, Point(-1, -1, -1));
     assert result_after = Point(1, 1, TRUE);
 
@@ -63,12 +63,12 @@ func test_jump_with_horizontal_right_obstacle_in_y_plus_1{range_check_ptr, peder
 // O O O 
 @external
 func test_jump_with_horizontal_right_obstacle_in_y_minus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
-    alloc_locals;
-    let obstacles: Point* = alloc();
-    let obstacles_len = 1;
-    assert obstacles[0] = Point(1, 0, FALSE);
+    alloc_locals;   
+    tempvar map_grids: felt* = cast(new(O, X, O,
+                                        O, O, O,
+                                        O, O, O),  felt*);
+    let map = Map(map_grids, 3, 3);   
 
-    let map = generate_map_with_obstacles(3, 3, obstacles, obstacles_len); 
     let result_after: Point = jump(1, 1, 0, 1, map, Point(-1, -1, -1));
     assert result_after = Point(1, 1, TRUE);
 
@@ -85,11 +85,11 @@ func test_jump_with_horizontal_right_obstacle_in_y_minus_1{range_check_ptr, pede
 @external
 func test_jump_with_horizontal_left_obstacle_in_y_minus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let obstacles: Point* = alloc();
-    let obstacles_len = 1;
-    assert obstacles[0] = Point(1, 0, FALSE);
+    tempvar map_grids: felt* = cast(new(O, X, O,
+                                        O, O, O,
+                                        O, O, O),  felt*);
+    let map = Map(map_grids, 3, 3);  
 
-    let map = generate_map_with_obstacles(3, 3, obstacles, obstacles_len); 
     let result_after: Point = jump(1, 1, 2, 1, map, Point(-1, -1, -1));
     assert result_after = Point(1, 1, TRUE);
 
@@ -106,11 +106,11 @@ func test_jump_with_horizontal_left_obstacle_in_y_minus_1{range_check_ptr, peder
 @external
 func test_jump_with_horizontal_left_obstacle_in_y_plus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let obstacles: Point* = alloc();
-    let obstacles_len = 1;
-    assert obstacles[0] = Point(1, 2, FALSE);
+    tempvar map_grids: felt* = cast(new(O, O, O,
+                                        O, O, O,
+                                        O, X, O),  felt*);
+    let map = Map(map_grids, 3, 3);  
 
-    let map = generate_map_with_obstacles(3, 3, obstacles, obstacles_len); 
     let result_after: Point = jump(1, 1, 2, 1, map, Point(-1, -1, -1));
     assert result_after = Point(1, 1, TRUE);
 
@@ -127,11 +127,11 @@ func test_jump_with_horizontal_left_obstacle_in_y_plus_1{range_check_ptr, peders
 @external
 func test_jump_with_vertical_down_obstacle_in_x_plus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let obstacles: Point* = alloc();
-    let obstacles_len = 1;
-    assert obstacles[0] = Point(2, 1, FALSE);
+    tempvar map_grids: felt* = cast(new(O, O, O,
+                                        O, O, X,
+                                        O, O, O),  felt*);
+    let map = Map(map_grids, 3, 3); 
 
-    let map = generate_map_with_obstacles(3, 3, obstacles, obstacles_len); 
     let result_after: Point = jump(1, 1, 1, 0, map, Point(-1, -1, -1));
     assert result_after = Point(1, 1, TRUE);
 
@@ -148,11 +148,11 @@ func test_jump_with_vertical_down_obstacle_in_x_plus_1{range_check_ptr, pedersen
 @external
 func test_jump_with_vertical_down_obstacle_in_x_minus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let obstacles: Point* = alloc();
-    let obstacles_len = 1;
-    assert obstacles[0] = Point(0, 1, FALSE);
+    tempvar map_grids: felt* = cast(new(O, O, O,
+                                        X, O, O,
+                                        O, O, O),  felt*);
+    let map = Map(map_grids, 3, 3);  
 
-    let map = generate_map_with_obstacles(3, 3, obstacles, obstacles_len); 
     let result_after: Point = jump(1, 1, 1, 0, map, Point(-1, -1, -1));
     assert result_after = Point(1, 1, TRUE);
 
@@ -169,11 +169,11 @@ func test_jump_with_vertical_down_obstacle_in_x_minus_1{range_check_ptr, pederse
 @external
 func test_jump_with_vertical_up_obstacle_in_x_plus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let obstacles: Point* = alloc();
-    let obstacles_len = 1;
-    assert obstacles[0] = Point(2, 1, FALSE);
+    tempvar map_grids: felt* = cast(new(O, O, O,
+                                        O, O, X,
+                                        O, O, O),  felt*);
+    let map = Map(map_grids, 3, 3);  
 
-    let map = generate_map_with_obstacles(3, 3, obstacles, obstacles_len); 
     let result_after: Point = jump(1, 1, 1, 2, map, Point(-1, -1, -1));
     assert result_after = Point(1, 1, TRUE);
 
@@ -190,11 +190,11 @@ func test_jump_with_vertical_up_obstacle_in_x_plus_1{range_check_ptr, pedersen_p
 @external
 func test_jump_with_vertical_up_obstacle_in_x_minus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let obstacles: Point* = alloc();
-    let obstacles_len = 1;
-    assert obstacles[0] = Point(2, 1, FALSE);
+    tempvar map_grids: felt* = cast(new(O, O, O,
+                                        X, O, O,
+                                        O, O, O),  felt*);
+    let map = Map(map_grids, 3, 3);  
 
-    let map = generate_map_with_obstacles(3, 3, obstacles, obstacles_len); 
     let result_after: Point = jump(1, 1, 1, 2, map, Point(-1, -1, -1));
     assert result_after = Point(1, 1, TRUE);
 
@@ -211,11 +211,11 @@ func test_jump_with_vertical_up_obstacle_in_x_minus_1{range_check_ptr, pedersen_
 @external
 func test_jump_with_diagonal_up_right_obstacle_in_x_minus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let obstacles: Point* = alloc();
-    let obstacles_len = 1;
-    assert obstacles[0] = Point(1, 1, FALSE);
-
-    let map = generate_map_with_obstacles(3, 3, obstacles, obstacles_len); 
+    tempvar map_grids: felt* = cast(new(O, O, O,
+                                        O, X, O,
+                                        O, O, O),  felt*);
+    let map = Map(map_grids, 3, 3);  
+    
     let result_after: Point = jump(2, 1, 1, 2, map, Point(-1, -1, -1));
     assert result_after = Point(2, 1, TRUE);
 
@@ -232,11 +232,11 @@ func test_jump_with_diagonal_up_right_obstacle_in_x_minus_1{range_check_ptr, ped
 @external
 func test_jump_with_diagonal_up_right_obstacle_in_y_plus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let obstacles: Point* = alloc();
-    let obstacles_len = 1;
-    assert obstacles[0] = Point(1, 2, FALSE);
-
-    let map = generate_map_with_obstacles(3, 3, obstacles, obstacles_len); 
+    tempvar map_grids: felt* = cast(new(O, O, O,
+                                        O, O, O,
+                                        O, X, O),  felt*);
+    let map = Map(map_grids, 3, 3);  
+    
     let result_after: Point = jump(1, 1, 0, 2, map, Point(-1, -1, -1));
     assert result_after = Point(1, 1, TRUE);
 
@@ -253,11 +253,11 @@ func test_jump_with_diagonal_up_right_obstacle_in_y_plus_1{range_check_ptr, pede
 @external
 func test_jump_with_diagonal_down_right_obstacle_in_x_minus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let obstacles: Point* = alloc();
-    let obstacles_len = 1;
-    assert obstacles[0] = Point(1, 1, FALSE);
-
-    let map = generate_map_with_obstacles(3, 3, obstacles, obstacles_len); 
+    tempvar map_grids: felt* = cast(new(O, O, O,
+                                        O, X, O,
+                                        O, O, O),  felt*);
+    let map = Map(map_grids, 3, 3);  
+    
     let result_after: Point = jump(2, 1, 1, 0, map, Point(-1, -1, -1));
     assert result_after = Point(2, 1, TRUE);
 
@@ -274,11 +274,11 @@ func test_jump_with_diagonal_down_right_obstacle_in_x_minus_1{range_check_ptr, p
 @external
 func test_jump_with_diagonal_down_right_obstacle_in_y_minus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let obstacles: Point* = alloc();
-    let obstacles_len = 1;
-    assert obstacles[0] = Point(1, 1, FALSE);
-
-    let map = generate_map_with_obstacles(3, 3, obstacles, obstacles_len); 
+    tempvar map_grids: felt* = cast(new(O, O, O,
+                                        O, X, O,
+                                        O, O, O),  felt*);
+    let map = Map(map_grids, 3, 3);  
+    
     let result_after: Point = jump(1, 2, 0, 1, map, Point(-1, -1, -1));
     assert result_after = Point(1, 2, TRUE);
 
@@ -295,11 +295,11 @@ func test_jump_with_diagonal_down_right_obstacle_in_y_minus_1{range_check_ptr, p
 @external
 func test_jump_with_diagonal_up_left_obstacle_in_x_plus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let obstacles: Point* = alloc();
-    let obstacles_len = 1;
-    assert obstacles[0] = Point(1, 1, FALSE);
+    tempvar map_grids: felt* = cast(new(O, O, O,
+                                        O, X, O,
+                                        O, O, O),  felt*);
+    let map = Map(map_grids, 3, 3);
 
-    let map = generate_map_with_obstacles(3, 3, obstacles, obstacles_len); 
     let result_after: Point = jump(0, 1, 1, 2, map, Point(-1, -1, -1));
     assert result_after = Point(0, 1, TRUE);
 
@@ -316,11 +316,11 @@ func test_jump_with_diagonal_up_left_obstacle_in_x_plus_1{range_check_ptr, peder
 @external
 func test_jump_with_diagonal_up_left_obstacle_in_y_plus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let obstacles: Point* = alloc();
-    let obstacles_len = 1;
-    assert obstacles[0] = Point(1, 2, FALSE);
-
-    let map = generate_map_with_obstacles(3, 3, obstacles, obstacles_len); 
+    tempvar map_grids: felt* = cast(new(O, O, O,
+                                        O, O, O,
+                                        O, X, O),  felt*);
+    let map = Map(map_grids, 3, 3);
+    
     let result_after: Point = jump(1, 1, 2, 2, map, Point(-1, -1, -1));
     assert result_after = Point(1, 1, TRUE);
 
@@ -337,11 +337,11 @@ func test_jump_with_diagonal_up_left_obstacle_in_y_plus_1{range_check_ptr, peder
 @external
 func test_jump_with_diagonal_down_left_obstacle_in_x_plus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let obstacles: Point* = alloc();
-    let obstacles_len = 1;
-    assert obstacles[0] = Point(2, 1, FALSE);
-
-    let map = generate_map_with_obstacles(3, 3, obstacles, obstacles_len); 
+    tempvar map_grids: felt* = cast(new(O, O, O,
+                                        O, O, X,
+                                        O, O, O),  felt*);
+    let map = Map(map_grids, 3, 3);
+    
     let result_after: Point = jump(1, 1, 2, 0, map, Point(-1, -1, -1));
     assert result_after = Point(1, 1, TRUE);
 
@@ -358,11 +358,11 @@ func test_jump_with_diagonal_down_left_obstacle_in_x_plus_1{range_check_ptr, ped
 @external
 func test_jump_with_diagonal_down_left_obstacle_in_y_minus_1{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let obstacles: Point* = alloc();
-    let obstacles_len = 1;
-    assert obstacles[0] = Point(1, 0, FALSE);
+    tempvar map_grids: felt* = cast(new(O, X, O,
+                                        O, O, O,
+                                        O, O, O),  felt*);
+    let map = Map(map_grids, 3, 3);
 
-    let map = generate_map_with_obstacles(3, 3, obstacles, obstacles_len); 
     let result_after: Point = jump(1, 1, 2, 0, map, Point(-1, -1, -1));
     assert result_after = Point(1, 1, TRUE);
 
@@ -387,48 +387,23 @@ func test_jump_with_diagonal_down_left_obstacle_in_y_minus_1{range_check_ptr, pe
 @external
 func test_jump_with_large_map{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     alloc_locals;
-    let obstacles: Point* = alloc();
-    let obstacles_len = 29;
-    assert obstacles[0] = Point(2, 1,  FALSE);
-    assert obstacles[1] = Point(14, 1, FALSE);
-    assert obstacles[2] = Point(2, 2, FALSE);
-    assert obstacles[3] = Point(13, 2, FALSE);
-    assert obstacles[4] = Point(14, 2, FALSE);
-    assert obstacles[5] = Point(2, 3, FALSE);
-    assert obstacles[6] = Point(12, 3, FALSE);
-    assert obstacles[7] = Point(13, 3, FALSE);
-    assert obstacles[8] = Point(14, 3, FALSE);
-    assert obstacles[9] = Point(15, 3, FALSE);
-    assert obstacles[10] = Point(1, 4, FALSE);
-    assert obstacles[11] = Point(4, 2, FALSE);
-    assert obstacles[12] = Point(3, 4, FALSE);
-    assert obstacles[13] = Point(9, 4, FALSE);
-    assert obstacles[14] = Point(10, 4, FALSE);
-    assert obstacles[15] = Point(11, 4, FALSE);
-    assert obstacles[16] = Point(12, 4, FALSE);
-    assert obstacles[17] = Point(13, 4, FALSE);
-    assert obstacles[18] = Point(14, 4, FALSE);
-    assert obstacles[19] = Point(15, 4, FALSE);
-    assert obstacles[20] = Point(2, 5, FALSE);
-    assert obstacles[21] = Point(15, 5, FALSE);
-    assert obstacles[22] = Point(16, 5, FALSE);
-    assert obstacles[23] = Point(2, 6, FALSE);
-    assert obstacles[24] = Point(7, 6, FALSE);
-    assert obstacles[25] = Point(6, 6, FALSE);
-    assert obstacles[26] = Point(8, 6, FALSE);
-    assert obstacles[27] = Point(15, 6, FALSE);
-    assert obstacles[28] = Point(16, 6, FALSE);
-
-    //let map = generate_map_with_obstacles(50, 50, obstacles, obstacles_len); 
-    let map = generate_map_with_obstacles(20, 10, obstacles, obstacles_len); 
     let dict_ptr: DictAccess* = create_dict(UNDEFINED);
-    // let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=dict_ptr}(1, 7, 14, 7, map);
-    let result_after: Point = jump(3, 6, 2, 5, map, Point(-1, -1, -1));
+    tempvar map_grids: felt* = cast(new(O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
+                                        O, O, X, O, O, O, O, O, O, O, O, O, O, O, X, O, O, O, O, O,
+                                        O, O, X, O, O, O, O, O, O, O, O, O, O, X, X, O, O, O, O, O,
+                                        O, O, X, O, O, O, O, O, O, O, O, O, O, X, X, O, O, O, O, O,
+                                        O, X, X, X, O, O, O, O, O, O, O, O, X, X, X, X, O, O, O, O,
+                                        O, O, X, O, O, O, O, O, O, X, X, X, X, X, X, X, O, O, O, O,
+                                        O, O, X, O, O, O, O, O, O, O, O, O, O, O, O, X, X, O, O, O,
+                                        O, O, X, O, O, O, X, X, X, O, O, O, O, O, O, X, X, O, O, O,
+                                        O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
+                                        O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O),  felt*);
+    let map = Map(map_grids, 20, 10);
+    let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=dict_ptr}(1, 7, 14, 7, map);
+    // let result_after: Point = jump(3, 6, 2, 5, map, Point(-1, -1, -1));
     // assert result_after_lenght = 123;
-
     // let result_after: Point = jump(4, 6, 3, 6, map, Point(-1, -1, -1));
     // assert result_after = Point(-1, -1, -1);
-
     return ();
 }
 
@@ -445,21 +420,20 @@ func test_jump_with_large_map{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
 @external
 func test_jump_with_small_map{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     alloc_locals;
-    let obstacles: Point* = alloc();
-    let obstacles_len = 5;
-    
-    assert obstacles[0] = Point(4, 2,  FALSE);
-    assert obstacles[1] = Point(4, 3, FALSE);
-    assert obstacles[2] = Point(4, 4, FALSE);
-    assert obstacles[3] = Point(4, 5, FALSE);
-    assert obstacles[4] = Point(4, 6, FALSE);
-
-    let map = generate_map_with_obstacles(8, 8, obstacles, obstacles_len); 
     let dict_ptr: DictAccess* = create_dict(UNDEFINED);
+    
+    tempvar map_grids: felt* = cast(new(O, O, O, O, O, O, O, O,
+                                        O, O, O, O, O, O, O, O,
+                                        O, O, O, O, X, O, O, O,
+                                        O, O, O, O, X, O, O, O,
+                                        O, O, O, O, X, O, O, O,
+                                        O, O, O, O, X, O, O, O,
+                                        O, O, O, O, X, O, O, O,
+                                        O, O, O, O, O, O, O, O),  felt*);
+    let map = Map(map_grids, 8, 8);
+
     let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=dict_ptr}(1, 3, 6, 3, map);
-    
-    
-    assert result_after_lenght = 123;
+    // assert result_after_lenght = 123;
     // let result_after: Point = jump(2, 3, 1, 4, map, Point(-1, -1, -1));
     // assert result_after.x = 100;
 
