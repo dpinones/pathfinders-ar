@@ -8,16 +8,15 @@ from starkware.cairo.common.hash import hash2
 from starkware.cairo.common.math import abs_value
 from starkware.cairo.common.registers import get_fp_and_pc
 
-
 from src.utils.condition import _or, _and, _not, _equals
 from src.utils.dictionary import add_entries, create_dict, read_entry, update_entry, write_entry
 from src.models.heuristic import octile, manhattan
 from src.models.map import Map, get_point_by_position, get_neighbours, is_inside_of_map, is_walkable_at
 from src.models.movement import Movement
-from src.models.point import Point, point_equals, set_point_attribute, get_point_attribute, build_reverse_path_from, convert_coords_to_id
-from src.models.point_status import OPENED, CLOSED
-from src.models.point_attribute import STATUS, DISTANCE_TRAVELED, PARENT, DISTANCE_TO_GOAL, ESTIMATED_TOTAL_PATH_DISTANCE, UNDEFINED
-
+from src.models.point import Point, point_equals, set_point_attribute, get_point_attribute, build_reverse_path_from
+from src.utils.point_converter import convert_coords_to_id
+from src.constants.point_status import OPENED, CLOSED
+from src.constants.point_attribute import STATUS, DISTANCE_TRAVELED, PARENT, DISTANCE_TO_GOAL, ESTIMATED_TOTAL_PATH_DISTANCE, UNDEFINED
 
 func find_path{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*}(start_x: felt, start_y: felt, end_x: felt, end_y: felt, map: Map) -> (felt, Point*) {
     alloc_locals;
