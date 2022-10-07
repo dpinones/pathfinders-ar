@@ -71,7 +71,7 @@ func test_generate_map_with_obstacles_happy_path{range_check_ptr}() {
     alloc_locals;
     tempvar map_grids: felt* = cast(new(O, X, O,
                                         X, O, O,
-                                        O, O, X),  felt*);
+                                        X, O, X),  felt*);
 
     let map = Map(map_grids, 3, 3);
 
@@ -94,7 +94,7 @@ func test_generate_map_with_obstacles_happy_path{range_check_ptr}() {
     assert grid.walkable = TRUE;
 
     let grid = get_point_by_position(map, 0, 2);
-    assert grid.walkable = TRUE;
+    assert grid.walkable = FALSE;
 
     let grid = get_point_by_position(map, 1, 2);
     assert grid.walkable = TRUE;
