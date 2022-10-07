@@ -7,9 +7,11 @@ from starkware.cairo.common.math_cmp import is_in_range
 from starkware.cairo.common.dict import DictAccess
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 
-from src.models.point import Point, contains_point, contains_point_equals, get_point_attribute, convert_id_to_coords, convert_coords_to_id
-from src.models.point_attribute import PARENT, UNDEFINED
+from src.models.point import Point, contains_point, contains_point_equals, get_point_attribute
+from src.constants.point_attribute import PARENT, UNDEFINED
+from src.constants.grid import X, O
 from src.utils.condition import _and, _equals, _max
+from src.utils.point_converter import convert_id_to_coords, convert_coords_to_id
 
 struct Map {
     grids: felt*,
@@ -19,19 +21,18 @@ struct Map {
 
 func get_point_by_position{range_check_ptr}(map: Map, x: felt, y: felt) -> Point {
     alloc_locals;
-    let is_in_range_x = is_in_range(x, 0, map.width);
-    let is_in_range_y = is_in_range(y, 0, map.height);
+    tempvar is_in_range_x = is_in_range(x, 0, map.width);
+    tempvar is_in_range_y = is_in_range(y, 0, map.height);
 
     let is_in_map = is_inside_of_map(map, x, y); 
-    if (is_in_map == 0) {
+    if (is_in_map == FALSE) {
         with_attr error_message("Point ({x}, {y}) is out of map range.") {
             assert 1 = 0;
         }
     }
 
     let id = convert_coords_to_id(x, y, map.width);
-    let is_obstacle = map.grids[id];
-    if (is_obstacle == TRUE) {
+    if (map.grids[id] == X) {
         let point = Point(x, y, FALSE);
         return point;
     } else {
@@ -177,22 +178,18 @@ func map_equals(map: Map, other: Map) -> felt {
         return FALSE;
     }
 
-    if (map.obstacles_lenght != other.obstacles_lenght) {
-        return FALSE;
-    }
-
-    return map_equals_internal(map.obstacles, map.obstacles_lenght, other.obstacles, other.obstacles_lenght);
+    return _map_equals(map.grids, other.grids, 0, map.width * map.height);
 }
 
-func map_equals_internal(obstacles: Point*, obstacles_lenght: felt, other_obstacles: Point*, other_obstacles_lenght: felt) -> felt {
-    if (other_obstacles_lenght == 0) {
+func _map_equals(grids: felt*, other_grids: felt*, index: felt, map_lenght: felt) -> felt {
+    if (map_lenght == 0) {
         return TRUE;
     }
 
-    let contains_point_in_obstacles_array = contains_point_equals(obstacles, obstacles_lenght, [other_obstacles].x, [other_obstacles].y, [other_obstacles].walkable); 
-    if (contains_point_in_obstacles_array == FALSE) {
+    if ([grids] != [other_grids]) {
         return FALSE;
-    }
+    } 
 
-    return map_equals_internal(obstacles, obstacles_lenght, other_obstacles + Point.SIZE, other_obstacles_lenght - 1);
+    return _map_equals(grids, other_grids, index + 1, map_lenght - 1);
 }
+
