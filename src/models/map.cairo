@@ -7,13 +7,12 @@ from starkware.cairo.common.math_cmp import is_in_range
 from starkware.cairo.common.dict import DictAccess
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 
-from src.models.point import Point, contains_point, contains_point_equals, get_point_attribute, convert_id_to_coords
+from src.models.point import Point, contains_point, contains_point_equals, get_point_attribute, convert_id_to_coords, convert_coords_to_id
 from src.models.point_attribute import PARENT, UNDEFINED
 from src.utils.condition import _and, _equals, _max
 
 struct Map {
-    obstacles: Point*,
-    obstacles_lenght: felt,
+    grids: felt*,
     width: felt,
     height: felt,
 }
@@ -30,8 +29,9 @@ func get_point_by_position{range_check_ptr}(map: Map, x: felt, y: felt) -> Point
         }
     }
 
-    let is_inside_of_obstacles = contains_point(map.obstacles, map.obstacles_lenght, x, y);
-    if (is_inside_of_obstacles == TRUE) {
+    let id = convert_coords_to_id(x, y, map.width);
+    let is_obstacle = map.grids[id];
+    if (is_obstacle == TRUE) {
         let point = Point(x, y, FALSE);
         return point;
     } else {

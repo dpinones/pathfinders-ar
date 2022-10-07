@@ -45,6 +45,13 @@ func find_path{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess
 
 func find_path_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*}(map: Map, open_list: Point*, open_list_lenght: felt, goal: Point) -> (felt, Point*) {
     if (open_list_lenght == 0) {
+        %{
+            from requests import post
+            json = { # creating the body of the post request so it's printed in the python script
+                "message": f"Nada mas que revisar, bye :( "
+            }
+            post(url="http://localhost:5000", json=json) # sending the request to our small "server"
+        %}
         let empty_list: Point* = alloc();
         return (0, empty_list);
     }
@@ -75,18 +82,8 @@ func identify_successors_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, d
     tempvar invalid_jump_point = point_equals(jump_point, Point(-1, -1, -1));
 
     if (invalid_jump_point == FALSE) {
-
-
         tempvar jump_status = get_point_attribute(jump_point, STATUS);
-        // %{
-        //     from requests import post
-        //     json = { # creating the body of the post request so it's printed in the python script
-        //         "message": f"Dentro de identify successors  ",
-        //         "open_list_lenght": f"{ids.open_list_lenght}",
-        //         "(x, y)": f"({ids.jump_point.x}, {ids.jump_point.y}) status: {ids.jump_status}"
-        //     }
-        //     post(url="http://localhost:5000", json=json) # sending the request to our small "server"
-        // %}
+        
         if (jump_status == CLOSED) {
             return identify_successors_internal(neighbours + Point.SIZE, neighbours_lenght - 1, parent, goal, map);
         } 
@@ -107,14 +104,14 @@ func identify_successors_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, d
             if (jump_point_attribute_h == UNDEFINED) {
                 let jump_h_value = manhattan(abs_value(jump_point.x - goal.x), abs_value(jump_point.y - goal.y));
                 set_point_attribute(jump_point, DISTANCE_TO_GOAL, jump_h_value);
-                set_point_attribute(jump_point, ESTIMATED_TOTAL_PATH_DISTANCE, jump_g_value + jump_h_value);
+                //set_point_attribute(jump_point, ESTIMATED_TOTAL_PATH_DISTANCE, jump_g_value + jump_h_value);
 
                 tempvar pedersen_ptr = pedersen_ptr;
                 tempvar range_check_ptr = range_check_ptr;
                 tempvar dict_ptr = dict_ptr;
                 tempvar open_list_lenght = open_list_lenght;
             } else {
-                set_point_attribute(jump_point, ESTIMATED_TOTAL_PATH_DISTANCE, jump_g_value + jump_point_attribute_h);
+                //set_point_attribute(jump_point, ESTIMATED_TOTAL_PATH_DISTANCE, jump_g_value + jump_point_attribute_h);
                 tempvar pedersen_ptr = pedersen_ptr;
                 tempvar range_check_ptr = range_check_ptr;
                 tempvar dict_ptr = dict_ptr;
@@ -129,6 +126,15 @@ func identify_successors_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, d
             if (j_is_not_opened == TRUE) {
                 assert open_list[open_list_lenght] = jump_point;
                 set_point_attribute(jump_point, STATUS, OPENED);
+                %{
+                    from requests import post
+                    json = { # creating the body of the post request so it's printed in the python script
+                        "message": f"Dentro de identify successors  ",
+                        "open_list_lenght": f"{ids.open_list_lenght}",
+                        "(x, y)": f"({ids.jump_point.x}, {ids.jump_point.y}) status: {ids.jump_status}"
+                    }
+                    post(url="http://localhost:5000", json=json) # sending the request to our small "server"
+                %}
 
                 tempvar pedersen_ptr = pedersen_ptr;
                 tempvar range_check_ptr = range_check_ptr;
