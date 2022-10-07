@@ -399,8 +399,8 @@ func test_jump_with_large_map{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
                                         O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
                                         O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O),  felt*);
     let map = Map(map_grids, 20, 10);
-    // let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=dict_ptr}(1, 7, 14, 7, map);
-    let result_after: Point = jump(3, 6, 2, 5, map, Point(-1, -1, -1));
+    let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=dict_ptr}(1, 7, 14, 7, map);
+    // let result_after: Point = jump(3, 6, 2, 5, map, Point(-1, -1, -1));
     // assert result_after_lenght = 123;
     // let result_after: Point = jump(4, 6, 3, 6, map, Point(-1, -1, -1));
     // assert result_after = Point(-1, -1, -1);

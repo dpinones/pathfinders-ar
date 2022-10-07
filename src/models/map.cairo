@@ -92,13 +92,7 @@ func prune_neighbours{range_check_ptr, pedersen_ptr: HashBuiltin*, dict_ptr: Dic
     tempvar dy = pre_dy / max_between_y_minus_py_and_one;
 
     tempvar is_diagonal_a_move = _and(abs_value(dx), abs_value(dy));
-    %{
-        from requests import post
-        json = { # creating the body of the post request so it's printed in the python script
-            "dx, dy": f" ({ids.dx}, {ids.dy})"
-        }
-        post(url="http://localhost:5000", json=json) # sending the request to our small "server"
-    %}
+
     if (is_diagonal_a_move == 1) {
         let (relevant_neighbours_len) = check_and_add_point(map, x, y + dy, x, y + dy, TRUE, relevant_neighbours_len, relevant_neighbours);
         let (relevant_neighbours_len) = check_and_add_point(map, x + dx, y, x + dx, y, TRUE, relevant_neighbours_len, relevant_neighbours);
@@ -124,14 +118,6 @@ func prune_neighbours{range_check_ptr, pedersen_ptr: HashBuiltin*, dict_ptr: Dic
 func check_and_add_point{range_check_ptr}(map: Map, x: felt, y: felt, relevant_x: felt, relevant_y: felt, walkable_condition: felt, relevant_neighbours_len: felt, relevant_neighbours: Point*) -> (felt){
     let is_walkable = is_walkable_at(map, x, y);
     if (is_walkable == walkable_condition) {
-            %{
-            from requests import post
-            json = { # creating the body of the post request so it's printed in the python script
-                "message": f" adding as neighbour ({ids.relevant_x}, {ids.relevant_y})",
-                "(walkable_at, cond)": f"({ids.is_walkable}, {ids.walkable_condition})"
-            }
-            post(url="http://localhost:5000", json=json) # sending the request to our small "server"
-        %}
         assert relevant_neighbours[relevant_neighbours_len] = Point(relevant_x, relevant_y, TRUE);
         return (relevant_neighbours_len + 1,);
     } else {
