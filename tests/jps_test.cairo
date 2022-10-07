@@ -447,6 +447,7 @@ func test_jump_with_small_map{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     alloc_locals;
     let obstacles: Point* = alloc();
     let obstacles_len = 5;
+    
     assert obstacles[0] = Point(4, 2,  FALSE);
     assert obstacles[1] = Point(4, 3, FALSE);
     assert obstacles[2] = Point(4, 4, FALSE);

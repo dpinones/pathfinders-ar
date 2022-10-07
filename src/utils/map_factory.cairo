@@ -16,7 +16,8 @@ from src.models.point import Point, contains_point
 
 // func generate_map_with_obstacles(width: felt, height: felt, obstacles: Point*, obstacles_lenght) -> Map {
 //     alloc_locals;
-//     let map = Map(obstacles, obstacles_lenght, width, height);
+//     let ff : felt*;
+//     // let map = Map(obstacles, obstacles_lenght, width, height);
 
 //     return map;
 // }

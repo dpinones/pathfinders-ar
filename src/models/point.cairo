@@ -177,13 +177,13 @@ func build_reverse_path_from_internal{pedersen_ptr: HashBuiltin*, range_check_pt
     alloc_locals;
     let parent_id = get_point_attribute(point, PARENT);
     if (parent_id != UNDEFINED) {
-    %{
-        from requests import post
-        json = { # creating the body of the post request so it's printed in the python script
-            "1": f"dentro de boom, parent_id: {ids.parent_id}",
-        }
-        post(url="http://localhost:5000", json=json) # sending the request to our small "server"
-    %}
+    // %{
+    //     from requests import post
+    //     json = { # creating the body of the post request so it's printed in the python script
+    //         "1": f"dentro de boom, parent_id: {ids.parent_id}",
+    //     }
+    //     post(url="http://localhost:5000", json=json) # sending the request to our small "server"
+    // %}
         let (x, y) = convert_id_to_coords(parent_id, width);
         assert result[result_lenght] = Point(x, y, TRUE);
         return build_reverse_path_from_internal(Point(x, y, TRUE), width, result, result_lenght + 1);

@@ -5,6 +5,9 @@ protostar_version = "0.4.2"
 libs_path = "lib"
 
 ["protostar.contracts"]
-jps = [
-    "src/jps.cairo",
+main = [
+    "src/main.cairo",
 ]
+
+["profile.testnet.protostar.deploy"]
+network="testnet"
