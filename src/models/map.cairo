@@ -255,6 +255,11 @@ func check_and_add_point_double_or_condition{range_check_ptr}(map: Map, first_x:
     let is_walkable_first = is_walkable_at(map, first_x, first_y);
     let is_walkable_second = is_walkable_at(map, second_x, second_y);
     let meet_conditions = _or(is_walkable_first, is_walkable_second);
+    
+    let candidate_is_walkable = is_walkable_at(map, relevant_x, relevant_y);
+    if (candidate_is_walkable == FALSE) {
+        return (relevant_neighbours_len,);
+    }
 
     if (meet_conditions == TRUE) {
         assert relevant_neighbours[relevant_neighbours_len] = Point(relevant_x, relevant_y, TRUE);
