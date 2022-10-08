@@ -5,9 +5,7 @@ from starkware.cairo.common.bool import TRUE, FALSE
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.dict import DictAccess
 from starkware.cairo.common.hash import hash2
-from starkware.cairo.common.registers import get_fp_and_pc
 
-from src.constants.point_status import OPENED, CLOSED
 from src.constants.point_attribute import PARENT, UNDEFINED
 from src.utils.condition import _and, _equals
 from src.utils.dictionary import read_entry, update_entry, write_entry
@@ -19,6 +17,12 @@ struct Point {
     walkable: felt,
 }
 
+// It allows us to retrieve a value associated with a (x, y) and a given attribute.
+// In case that we dont set any value, returns an UNDEFINED value.
+//
+// @param: point- Point to get attribute.
+// @param: attribute - Attribute name (could be any felt, but we use pre-defined ones from constants.point_attribute).
+// @return: felt - Value mapped to an attribute.
 func get_point_attribute{pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(point: Point, attribute: felt) -> felt {
     let (point_hash) = hash2{hash_ptr=pedersen_ptr}(point.x, point.y);
     let (attribute_hash) = hash2{hash_ptr=pedersen_ptr}(point_hash, attribute);
@@ -27,6 +31,12 @@ func get_point_attribute{pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(poin
     return value;
 }
 
+// It allows us to set a value associated with a (x, y) and a given attribute.
+//
+// @param: point- Point to get attribute.
+// @param: attribute - Attribute name (could be any felt, but we use pre-defined ones from constants.point_attribute).
+// @param: new_value - Value that we are going to associate to the attribute.
+// @return: felt - Value mapped to an attribute.
 func set_point_attribute{pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(point: Point, attribute: felt, new_value: felt) {
     let (point_hash) = hash2{hash_ptr=pedersen_ptr}(point.x, point.y);
     let (attribute_hash) = hash2{hash_ptr=pedersen_ptr}(point_hash, attribute);
@@ -41,136 +51,130 @@ func set_point_attribute{pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(poin
     }
 }
 
-// Check if an array of points contains a point with position (x, y)
+// Check if an array of points contains a point with position (x, y).
 //
-// @param: points - The array of points
-// @param: lenght - The lenght of points
-// @param: x - The x position to check if exists in the array
-// @param: y - The y position to check if exists in the array
-// @return: felt - 1 if the point exists in the array, 0 otherwise  
+// @param: points - The array of points.
+// @param: lenght - The lenght of points.
+// @param: x - The x position to check if exists in the array.
+// @param: y - The y position to check if exists in the array.
+// @return: felt - 1 if the point exists in the array, 0 otherwise.
 func contains_point(points: Point*, points_lenght: felt, x: felt, y: felt) -> felt {
-    return contains_point_internal(points, points_lenght, x, y);
-}
-
-func contains_point_internal(points: Point*, points_lenght: felt, x: felt, y: felt) -> felt {
     if (points_lenght == 0) {
         return FALSE;
     }
-
     if ([points].x == x and [points].y == y) {
         return TRUE;
     }
 
-    return contains_point_internal(points + Point.SIZE, points_lenght - 1, x, y);
+    return contains_point(points + Point.SIZE, points_lenght - 1, x, y);
 }
 
-// Check if two arrays has the same points
+// Check if two arrays has the same points.
 //
-// @param: points - The array of points
-// @param: points_lenght - The lenght of points
-// @param: other - The array of points to compare
-// @param: other_lenght - The lenght of other
-// @return: felt - 1 if points and other contains all points eachother, 0 otherwise
+// @param: points - The array of points.
+// @param: points_lenght - The lenght of points.
+// @param: other - The array of points to compare.
+// @param: other_lenght - The lenght of other.
+// @return: felt - 1 if points and other contains all points eachother, 0 otherwise.
 func contains_all_points(points: Point*, points_lenght: felt, other: Point*, other_lenght: felt) -> felt {
     if (points_lenght != other_lenght) {
         return FALSE;
     }
 
-    return contains_all_points_internal(points, points_lenght, other, other_lenght);
+    return _contains_all_points(points, points_lenght, other, other_lenght);
 }
 
-func contains_all_points_internal(points: Point*, points_lenght: felt, other: Point*, other_lenght: felt) -> felt {
+func _contains_all_points(points: Point*, points_lenght: felt, other: Point*, other_lenght: felt) -> felt {
     if (points_lenght == 0) {
         return TRUE;
     }
-
     let founded = contains_point(other, other_lenght, [points].x, [points].y); 
     if (founded == 0) {
         return FALSE;
     }
 
-    return contains_all_points_internal(points + Point.SIZE, points_lenght - 1, other , other_lenght);
+    return _contains_all_points(points + Point.SIZE, points_lenght - 1, other , other_lenght);
 }
 
 // Check if an array of points contains a point with position (x, y)
-// and if walkable are the same value in that point
+// and if walkable are the same value in that point.
 //
-// @param: points - The array of points
-// @param: points_lenght - The lenght of points
-// @param: x - The x position to check if exists in the array
-// @param: y - The y position to check if exists in the array
-// @param: walkable - The walkable to check if exists in the array
-// @return: felt - 1 if points and other contains all points eachother and walkable values are the same, 0 otherwise
+// @param: points - The array of points.
+// @param: points_lenght - The lenght of points.
+// @param: x - The x position to check if exists in the array.
+// @param: y - The y position to check if exists in the array.
+// @param: walkable - The walkable to check if exists in the array.
+// @return: felt - 1 if points and other contains all points eachother and walkable values are the same, 0 otherwise.
 func contains_point_equals(points: Point*, points_lenght: felt, x: felt, y: felt, walkable: felt) -> felt {
-    return contains_point_equals_internal(points, points_lenght, x, y, walkable);
-}
-
-func contains_point_equals_internal(points: Point*, points_lenght: felt, x: felt, y: felt, walkable: felt) -> felt {
     if (points_lenght == 0) {
         return FALSE;
     }
-
     if ([points].x == x and [points].y == y and [points].walkable == walkable) {
         return TRUE;
     }
 
-    return contains_point_equals_internal(points + Point.SIZE, points_lenght - 1, x, y, walkable);
+    return contains_point_equals(points + Point.SIZE, points_lenght - 1, x, y, walkable);
 }
 
-// Check if two arrays has the same points and walkables values
+// Check if two arrays has the same points and walkables values.
 //
-// @param: points - The array of points
-// @param: points_lenght - The lenght of points
-// @param: other - The array of points to compare
-// @param: other_lenght - The lenght of other
-// @return: felt - 1 if points and other contains all points eachother, 0 otherwise
+// @param: points - The array of points.
+// @param: points_lenght - The lenght of points.
+// @param: other - The array of points to compare.
+// @param: other_lenght - The lenght of other.
+// @return: felt - TRUE if points and other contains all points eachother, FALSE otherwise.
 func contains_all_points_equals(points: Point*, points_lenght: felt, other: Point*, other_lenght: felt) -> felt {
     if (points_lenght != other_lenght) {
         return FALSE;
     }
 
-    return contains_all_points_equals_internal(points, points_lenght, other, other_lenght);
+    return _contains_all_points_equals(points, points_lenght, other, other_lenght);
 }
 
-func contains_all_points_equals_internal(points: Point*, points_lenght: felt, other: Point*, other_lenght: felt) -> felt {
+func _contains_all_points_equals(points: Point*, points_lenght: felt, other: Point*, other_lenght: felt) -> felt {
     if (points_lenght == 0) {
         return TRUE;
     }
-
     let founded = contains_point_equals(other, other_lenght, [points].x, [points].y, [points].walkable); 
     if (founded == 0) {
         return FALSE;
     }
 
-    return contains_all_points_internal(points + Point.SIZE, points_lenght - 1, other , other_lenght);
+    return _contains_all_points_equals(points + Point.SIZE, points_lenght - 1, other , other_lenght);
 }
 
+// Verify if two points are equals
+//
+// @param: point - point to compare.
+// @param: other - other point to compare.
+// @return: felt - TRUE if points are equals, FALSE otherwise.
 func point_equals(point: Point, other: Point) -> felt {
     tempvar x_equal = _equals(point.x, other.x);
     tempvar y_equal = _equals(point.y, other.y);
     tempvar walkable_equal = _equals(point.walkable, other.walkable);
     tempvar points_are_equals = _and(x_equal, _and(y_equal, walkable_equal));
 
-    if (points_are_equals == TRUE) {
-        return TRUE;
-    } else {
-        return FALSE;
-    }
+    return points_are_equals;
 }
 
+// Returns a list with all the nodes linked by the parent attribute.
+//
+// @param: point - Initial node to get its parents.
+// @param: width - Map width.
+// @return: (felt, Point*) - The list of all nodes linked by parent attribute and length.
 func build_reverse_path_from{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*}(point: Point, width: felt) -> (felt, Point*) {
     let res: Point* = alloc();
     assert res[0] = point;
-    return build_reverse_path_from_internal(point, width, res, 1);
+    return _build_reverse_path_from(point, width, res, 1);
 }
 
-func build_reverse_path_from_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*}(point: Point, width: felt, result: Point*, result_lenght: felt) -> (felt, Point*) {
+func _build_reverse_path_from{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*}(point: Point, width: felt, result: Point*, result_lenght: felt) -> (felt, Point*) {
     alloc_locals;
     let parent_id = get_point_attribute(point, PARENT);
     if (parent_id != UNDEFINED) {
         let (x, y) = convert_id_to_coords(parent_id, width);
         assert result[result_lenght] = Point(x, y, TRUE);
-        return build_reverse_path_from_internal(Point(x, y, TRUE), width, result, result_lenght + 1);
+        return _build_reverse_path_from(Point(x, y, TRUE), width, result, result_lenght + 1);
     } else {
         return (result_lenght, result);    
     }
