@@ -19,6 +19,12 @@ struct Map {
     height: felt,
 }
 
+// Returns a Point given a position (x, y).
+//
+// @param: map - Map from which we want to get the point.
+// @param: x - X position.
+// @param: y - Y position.
+// @return: Point - Returns the point at position (x, y) if it exists, if the point is outside the map it will throw an error.
 func get_point_by_position{range_check_ptr}(map: Map, x: felt, y: felt) -> Point {
     alloc_locals;
     tempvar is_in_range_x = is_in_range(x, 0, map.width);
@@ -41,6 +47,14 @@ func get_point_by_position{range_check_ptr}(map: Map, x: felt, y: felt) -> Point
     }
 }
 
+// Check if the (x,y) coordinates are accessible:
+//   (1) The point is inside the map 
+//   (2) The point has the attribute as walkable in TRUE
+//
+// @param: map - Map from which we want to verify.
+// @param: x - X position.
+// @param: y - Y position.
+// @return: Point - Returns TRUE if conditions (1) and (2) are met.
 func is_walkable_at{range_check_ptr}(map: Map, x: felt, y: felt) -> felt {
     let is_in_map = is_inside_of_map(map, x, y);
     if (is_in_map == FALSE) {

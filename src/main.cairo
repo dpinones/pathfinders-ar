@@ -11,7 +11,6 @@ from src.constants.point_attribute import UNDEFINED
 from src.jps import jump, find_path
 from starkware.cairo.common.dict import DictAccess
 
-
 @view
 func path_finder{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(start_x: felt, start_y: felt, end_x: felt, end_y: felt, grids_len: felt, grids: felt*, width: felt, height: felt) -> (
     points_len: felt, points: Point*

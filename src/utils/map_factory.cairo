@@ -3,7 +3,7 @@
 from starkware.cairo.common.alloc import alloc
 
 from src.models.map import Map
-from src.constants.grid import X, O
+from src.constants.grid import O
 
 func generate_map(grids: felt*, width: felt, height: felt) -> Map {
     let map = Map(grids, width, height);
