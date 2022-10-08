@@ -243,7 +243,18 @@ func jump{range_check_ptr, pedersen_ptr: HashBuiltin*}(x: felt, y: felt, px: fel
             tempvar pedersen_ptr = pedersen_ptr;
         }
     }
-    // Jump forward in original direction
-    return jump(x + dx, y + dy, x, y, map, end_node);
+    
+    tempvar range_check_ptr = range_check_ptr;
+    tempvar pedersen_ptr = pedersen_ptr;
+
+    let is_walkable_in_dx = is_walkable_at(map, x + dx, y); 
+    let is_walkable_in_dy = is_walkable_at(map, x, y + dy); 
+    let is_walkable_in_dx_or_dy = _or(is_walkable_in_dx, is_walkable_in_dy);
+    if (is_walkable_in_dx_or_dy == TRUE) {
+        return jump(x + dx, y + dy, x, y, map, end_node);
+    } else {
+        let invalid_point = Point(-1, -1, -1);
+        return invalid_point;
+    }
 }
 

@@ -125,7 +125,7 @@ func prune_neighbours{range_check_ptr, pedersen_ptr: HashBuiltin*, dict_ptr: Dic
     return (relevant_neighbours_len, relevant_neighbours);
 }
 
-func check_and_add_point{range_check_ptr}(map: Map, x: felt, y: felt, relevant_x: felt, relevant_y: felt, walkable_condition: felt, relevant_neighbours_len: felt, relevant_neighbours: Point*) -> (felt){
+func check_and_add_point{range_check_ptr}(map: Map, x: felt, y: felt, relevant_x: felt, relevant_y: felt, walkable_condition: felt, relevant_neighbours_len: felt, relevant_neighbours: Point*) -> (felt) {
     let is_walkable = is_walkable_at(map, x, y);
     if (is_walkable == walkable_condition) {
         assert relevant_neighbours[relevant_neighbours_len] = Point(relevant_x, relevant_y, TRUE);
@@ -164,11 +164,80 @@ func check_and_add_point_double_or_condition{range_check_ptr}(map: Map, first_x:
 }
 
 func get_neighbours_internal{range_check_ptr, pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(map: Map, x: felt, y: felt) -> (felt, Point*) {
-    let res: Point* = alloc();
-    let (all_neighbours_len, all_neighbours) = get_neighbours_without_out_of_range_internal(map, x, y, 0, res, 0, -1, -1, 0);
-    let filtered: Point* = alloc();
-    return filter_neighbours_if_not_walkable(all_neighbours, all_neighbours_len, filtered, 0);
+    alloc_locals;
+    let relevant_neighbours: Point* = alloc(); 
+    local relevant_neighbours_len = 0;
+
+    // ↑
+    let s0 = is_walkable_at(map, x, y - 1);
+    let (relevant_neighbours_len) = check_and_add_point(map, x, y, x, y - 1, TRUE, relevant_neighbours_len, relevant_neighbours);
+    // →
+    let s1 = is_walkable_at(map, x + 1, y);
+    let (relevant_neighbours_len) = check_and_add_point(map, x + 1, y, x + 1, y, TRUE, relevant_neighbours_len, relevant_neighbours);
+    // ↓
+    let s2 = is_walkable_at(map, x, y + 1);
+    let (relevant_neighbours_len) = check_and_add_point(map, x, y + 1, x, y + 1, TRUE, relevant_neighbours_len, relevant_neighbours);
+    // ←
+    let s3 = is_walkable_at(map, x - 1, y);
+    let (relevant_neighbours_len) = check_and_add_point(map, x - 1, y, x - 1, y, TRUE, relevant_neighbours_len, relevant_neighbours);
+    
+    tempvar d0 = _or(s3, s0);
+    tempvar d1 = _or(s0, s1);
+    tempvar d2 = _or(s1, s2);
+    tempvar d3 = _or(s2, s3);
+
+    // ↖
+    let is_walkable = is_walkable_at(map, x - 1, y - 1);
+    let is_walkable_and_can_do_diagonal = _and(d0, is_walkable);
+    if (is_walkable_and_can_do_diagonal == TRUE) {
+        let (relevant_neighbours_len) = check_and_add_point(map, x - 1, y - 1, x - 1, y - 1, TRUE, relevant_neighbours_len, relevant_neighbours);
+    } else {
+        tempvar range_check_ptr = range_check_ptr;
+        tempvar relevant_neighbours_len = relevant_neighbours_len;
+    }
+        tempvar range_check_ptr = range_check_ptr;
+        tempvar relevant_neighbours_len = relevant_neighbours_len;
+    // ↗
+    let is_walkable = is_walkable_at(map, x + 1, y - 1);
+    let is_walkable_and_can_do_diagonal = _and(d1, is_walkable);
+    if (is_walkable_and_can_do_diagonal == TRUE) {
+        let (relevant_neighbours_len) = check_and_add_point(map, x + 1, y - 1, x + 1, y - 1, TRUE, relevant_neighbours_len, relevant_neighbours);
+    } else {
+        tempvar range_check_ptr = range_check_ptr;
+        tempvar relevant_neighbours_len = relevant_neighbours_len;
+    }
+        tempvar range_check_ptr = range_check_ptr;
+        tempvar relevant_neighbours_len = relevant_neighbours_len;
+    // ↗
+    let is_walkable = is_walkable_at(map, x + 1, y + 1);
+    let is_walkable_and_can_do_diagonal = _and(d2, is_walkable);
+    if (is_walkable_and_can_do_diagonal == TRUE) {
+        let (relevant_neighbours_len) = check_and_add_point(map, x + 1, y + 1, x + 1, y + 1, TRUE, relevant_neighbours_len, relevant_neighbours);
+    } else {
+        tempvar range_check_ptr = range_check_ptr;
+        tempvar relevant_neighbours_len = relevant_neighbours_len;
+    }
+        tempvar range_check_ptr = range_check_ptr;
+        tempvar relevant_neighbours_len = relevant_neighbours_len;
+    // ↙
+    let is_walkable = is_walkable_at(map, x - 1, y + 1);
+    let is_walkable_and_can_do_diagonal = _and(d3, is_walkable);
+    if (is_walkable_and_can_do_diagonal == TRUE) {
+        let (relevant_neighbours_len) = check_and_add_point(map, x - 1, y + 1, x - 1, y + 1, TRUE, relevant_neighbours_len, relevant_neighbours);
+    } else {
+        tempvar range_check_ptr = range_check_ptr;
+        tempvar relevant_neighbours_len = relevant_neighbours_len;
+    }
+
+    return (relevant_neighbours_len, relevant_neighbours);
 }
+
+// func get_neighbours_internal{range_check_ptr, pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(map: Map, x: felt, y: felt) -> (felt, Point*) {
+//     let res: Point* = alloc();
+//     let (all_neighbours_len, all_neighbours) = get_neighbours_without_out_of_range_internal(map, x, y, 0, res, 0, -1, -1, 0);
+//     let filtered: Point* = alloc();
+//     return filter_neighbours_if_not_walkable(all_neighbours, all_neighbours_len, filtered, 0);
+// }
 
 func get_neighbours_without_out_of_range_internal{range_check_ptr, pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(map: Map, x: felt, y: felt, closed_count: felt, res: Point*, res_len: felt, actual_x: felt, actual_y: felt, reset_y: felt) -> (felt, Point*) { 
     alloc_locals;
