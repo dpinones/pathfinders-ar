@@ -10,7 +10,7 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin
 from src.models.point import Point, contains_point, contains_point_equals, get_point_attribute
 from src.constants.point_attribute import PARENT, UNDEFINED
 from src.constants.grid import X, O
-from src.utils.condition import _and, _equals, _max
+from src.utils.condition import _and, _equals, _max, _not, _or
 from src.utils.point_converter import convert_id_to_coords, convert_coords_to_id
 
 struct Map {
@@ -93,23 +93,33 @@ func prune_neighbours{range_check_ptr, pedersen_ptr: HashBuiltin*, dict_ptr: Dic
 
     tempvar is_diagonal_a_move = _and(abs_value(dx), abs_value(dy));
 
-    if (is_diagonal_a_move == 1) {
+    if (is_diagonal_a_move == TRUE) {
         let (relevant_neighbours_len) = check_and_add_point(map, x, y + dy, x, y + dy, TRUE, relevant_neighbours_len, relevant_neighbours);
         let (relevant_neighbours_len) = check_and_add_point(map, x + dx, y, x + dx, y, TRUE, relevant_neighbours_len, relevant_neighbours);
-        let (relevant_neighbours_len) = check_and_add_point(map, x + dx, y + dy, x + dx, y + dy, TRUE, relevant_neighbours_len, relevant_neighbours);
-        
-        let (relevant_neighbours_len) = check_and_add_point(map, x - dx, y, x - dx, y - dy, FALSE, relevant_neighbours_len, relevant_neighbours);
-        let (relevant_neighbours_len) = check_and_add_point(map, x, y - dy, x + dx, y - dy, FALSE, relevant_neighbours_len, relevant_neighbours);
-    
+        let (relevant_neighbours_len) = check_and_add_point_double_or_condition(map, x, y + dy, x + dx, y, x + dx, y + dy, relevant_neighbours_len, relevant_neighbours);
+        let (relevant_neighbours_len) = check_and_add_point_double_and_condition(map, x - dx, y, x, y + dy, x - dx, y + dy, relevant_neighbours_len, relevant_neighbours);
+        let (relevant_neighbours_len) = check_and_add_point_double_and_condition(map, x, y - dy, x + dx, y, x + dx, y - dy, relevant_neighbours_len, relevant_neighbours);
     } else {
         if (dx == 0) {
-            let (relevant_neighbours_len) = check_and_add_point(map, x, y + dy, x, y + dy, TRUE,relevant_neighbours_len, relevant_neighbours);
-            let (relevant_neighbours_len) = check_and_add_point(map, x + 1, y, x + 1, y + dy, FALSE, relevant_neighbours_len, relevant_neighbours);
-            let (relevant_neighbours_len) = check_and_add_point(map, x - 1, y, x - 1, y + dy, FALSE, relevant_neighbours_len, relevant_neighbours);
+            let is_walkable_at_grid = is_walkable_at(map, x, y + dy);
+            if (is_walkable_at_grid == TRUE) {
+                let (relevant_neighbours_len) = check_and_add_point(map, x, y + dy, x, y + dy, TRUE, relevant_neighbours_len, relevant_neighbours);
+                let (relevant_neighbours_len) = check_and_add_point(map, x + 1, y, x + 1, y + dy, FALSE, relevant_neighbours_len, relevant_neighbours);
+                let (relevant_neighbours_len) = check_and_add_point(map, x - 1, y, x - 1, y + dy, FALSE, relevant_neighbours_len, relevant_neighbours);
+            } else {
+                tempvar range_check_ptr = range_check_ptr;
+                tempvar relevant_neighbours_len = relevant_neighbours_len;
+            }
         } else {
-            let (relevant_neighbours_len) = check_and_add_point(map, x + dx, y, x + dx, y, TRUE, relevant_neighbours_len, relevant_neighbours);
-            let (relevant_neighbours_len) = check_and_add_point(map, x, y + 1, x + dx, y + 1, FALSE, relevant_neighbours_len, relevant_neighbours);
-            let (relevant_neighbours_len) = check_and_add_point(map, x, y - 1, x + dx, y - 1, FALSE, relevant_neighbours_len, relevant_neighbours);
+            let is_walkable_at_grid = is_walkable_at(map, x + dx, y);
+                if (is_walkable_at_grid == TRUE) {
+                    let (relevant_neighbours_len) = check_and_add_point(map, x + dx, y, x + dx, y, TRUE, relevant_neighbours_len, relevant_neighbours);
+                    let (relevant_neighbours_len) = check_and_add_point(map, x, y + 1, x + dx, y + 1, FALSE, relevant_neighbours_len, relevant_neighbours);
+                    let (relevant_neighbours_len) = check_and_add_point(map, x, y - 1, x + dx, y - 1, FALSE, relevant_neighbours_len, relevant_neighbours);
+                } else {
+                    tempvar range_check_ptr = range_check_ptr;
+                    tempvar relevant_neighbours_len = relevant_neighbours_len;
+                }
         }
     }
     return (relevant_neighbours_len, relevant_neighbours);
@@ -118,6 +128,34 @@ func prune_neighbours{range_check_ptr, pedersen_ptr: HashBuiltin*, dict_ptr: Dic
 func check_and_add_point{range_check_ptr}(map: Map, x: felt, y: felt, relevant_x: felt, relevant_y: felt, walkable_condition: felt, relevant_neighbours_len: felt, relevant_neighbours: Point*) -> (felt){
     let is_walkable = is_walkable_at(map, x, y);
     if (is_walkable == walkable_condition) {
+        assert relevant_neighbours[relevant_neighbours_len] = Point(relevant_x, relevant_y, TRUE);
+        return (relevant_neighbours_len + 1,);
+    } else {
+        return (relevant_neighbours_len,);
+    }
+}
+
+func check_and_add_point_double_and_condition{range_check_ptr}(map: Map, first_x: felt, first_y: felt, second_x: felt, second_y: felt, relevant_x: felt, relevant_y: felt, relevant_neighbours_len: felt, relevant_neighbours: Point*) -> (felt){
+    alloc_locals;
+    let is_walkable_first = is_walkable_at(map, first_x, first_y);
+    let is_walkable_second = is_walkable_at(map, second_x, second_y);
+    let meet_conditions = _and(_not(is_walkable_first), is_walkable_second);
+
+    if (meet_conditions == TRUE) {
+        assert relevant_neighbours[relevant_neighbours_len] = Point(relevant_x, relevant_y, TRUE);
+        return (relevant_neighbours_len + 1,);
+    } else {
+        return (relevant_neighbours_len,);
+    }
+}
+
+func check_and_add_point_double_or_condition{range_check_ptr}(map: Map, first_x: felt, first_y: felt, second_x: felt, second_y: felt, relevant_x: felt, relevant_y: felt, relevant_neighbours_len: felt, relevant_neighbours: Point*) -> (felt){
+    alloc_locals;
+    let is_walkable_first = is_walkable_at(map, first_x, first_y);
+    let is_walkable_second = is_walkable_at(map, second_x, second_y);
+    let meet_conditions = _or(is_walkable_first, is_walkable_second);
+
+    if (meet_conditions == TRUE) {
         assert relevant_neighbours[relevant_neighbours_len] = Point(relevant_x, relevant_y, TRUE);
         return (relevant_neighbours_len + 1,);
     } else {
