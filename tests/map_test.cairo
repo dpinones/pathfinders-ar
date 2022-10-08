@@ -100,6 +100,10 @@ func test_get_neighbours_happy_path{range_check_ptr, pedersen_ptr: HashBuiltin*}
     return();
 }
 
+// A: actual node, no parent.
+// A O O
+// O O O
+// O O O
 @external
 func test_get_neighbours_corner{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
@@ -133,9 +137,7 @@ func test_get_neighbours_middle{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(map, Point(1, 0, TRUE));
 
     let points_expected: Point* = alloc();
-    let points_expected_len = 2;
-    assert points_expected[0] = Point(0, 1, TRUE);
-    assert points_expected[1] = Point(2, 1, TRUE);
+    let points_expected_len = 0;
 
     let result = contains_all_points_equals(points, points_len, points_expected, points_expected_len);
     assert result = TRUE;
@@ -178,6 +180,7 @@ func test_get_neighbours_with_parent_middle{range_check_ptr, pedersen_ptr: HashB
 // O P O O 
 // O X A O 
 // O O O O
+// dx = 1, dy = 1
 @external
 func test_get_neighbours_with_parent_middle_diagonal{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
@@ -200,7 +203,7 @@ func test_get_neighbours_with_parent_middle_diagonal{range_check_ptr, pedersen_p
     assert points_expected[0] = Point(2, 3, TRUE);
     assert points_expected[1] = Point(3, 2, TRUE);
     assert points_expected[2] = Point(3, 3, TRUE);
-    assert points_expected[3] = Point(1, 1, TRUE);
+    assert points_expected[3] = Point(1, 3, TRUE);
 
     let result = contains_all_points_equals(points, points_len, points_expected, points_expected_len);
     assert result = TRUE;
