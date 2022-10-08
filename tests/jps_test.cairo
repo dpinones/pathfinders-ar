@@ -385,7 +385,7 @@ func test_jump_with_diagonal_down_left_obstacle_in_y_minus_1{range_check_ptr, pe
 // 8 O O O O O O O O O O O O O O O O O O O O
 // 9 O O O O O O O O O O O O O O O O O O O O
 @external
-func test_jump_with_large_map{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
+func test_find_path_with_large_map{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     alloc_locals;
     let dict_ptr: DictAccess* = create_dict(UNDEFINED);
     tempvar map_grids: felt* = cast(new(O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
@@ -407,6 +407,56 @@ func test_jump_with_large_map{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     return ();
 }
 
+// Giving parent (P) and actual (A) has an obstacle in (y - 1) position
+// When call jump()
+// Then method will return actual node as jump point
+// Map width = 20, height = 10
+//   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9
+// 0 O O O O O O O O O O O O O O O O O O O O
+// 1 O O X O O O O O O O O O O O X O O O O O
+// 2 O O X O O P O O O O O O O X X O O O O O
+// 3 O O X O O O A O O O O O X X X X O O O O
+// 4 O X X X O O O O J X X X X X X X O O O O
+// 5 O O X O O O O O O O O O O O O X X O O O
+// 6 O O X O O O X X X O O O O O O X X O O O
+// 7 O O O O O O O O O O O O O O O O O O O O
+// 8 O O O O O O O O O O O O O O O O O O O O
+// 9 O O O O O O O O O O O O O O O O O O O O
+@external
+func test_find_path_with_large_map2{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
+    alloc_locals;
+    let dict_ptr: DictAccess* = create_dict(UNDEFINED);
+    tempvar map_grids: felt* = cast(new(
+            O, O, O, O, O, O, O, O, X, O, O, O, O, O, X, X, X, O, O, O, 
+            O, O, O, O, O, O, O, X, O, O, O, O, O, O, X, O, O, O, O, O,
+            O, O, O, O, O, O, X, O, O, O, O, O, O, X, X, O, X, X, X, X,
+            O, O, O, O, O, X, X, O, O, O, O, O, O, X, O, O, X, O, O, O,
+            O, O, O, O, O, X, O, O, O, O, O, O, X, O, O, O, X, O, O, O,
+            O, O, O, O, O, X, O, O, X, O, O, X, X, O, O, O, X, X, X, X,
+            O, O, O, O, O, X, O, O, X, O, O, X, O, O, O, O, O, O, O, O,
+            O, O, O, O, X, X, O, X, O, O, X, O, O, O, O, O, O, O, O, O,
+            O, O, O, O, X, O, X, O, O, O, X, O, O, O, O, O, X, X, O, O,
+            O, O, O, X, O, O, X, O, O, X, O, O, O, O, O, X, X, X, O, O,
+            O, O, O, X, O, O, X, O, O, X, O, O, O, O, X, X, O, X, O, O,
+            O, O, O, X, O, O, X, O, X, X, O, O, O, X, O, O, O, O, X, O,
+            O, O, O, X, X, X, X, X, X, O, O, X, X, O, O, O, O, O, X, O,
+            O, O, O, O, O, X, X, O, O, O, X, X, O, O, O, O, O, O, X, O,
+            O, X, O, O, O, O, O, O, X, X, O, O, O, O, O, O, O, O, X, O,
+            X, X, X, X, X, X, X, O, X, O, O, O, O, X, O, O, O, O, X, O,
+            O, O, X, O, X, X, X, X, X, O, O, O, O, X, O, O, O, O, X, O,
+            O, O, O, O, X, X, X, O, X, O, O, O, O, X, O, O, O, O, X, O,
+            O, O, O, O, O, X, O, X, X, O, O, O, O, X, X, X, X, X, X, O,
+            O, O, X, O, O, X, O, O, X, O, O, O, O, O, O, O, O, O, O, O),  felt*);
+    let map = Map(map_grids, 20, 20);
+    let start_x = 2;
+    let start_y = 2;
+    let end_x = 17;
+    let end_y = 16;
+    let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=dict_ptr}(start_x, start_y, end_x, end_y, map);
+
+    return ();
+}
+
 // Map width = 8, height = 8
 //   0 1 2 3 4 5 6 7 
 // 0 O O O O O O O O 
@@ -418,28 +468,26 @@ func test_jump_with_large_map{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
 // 6 O O O O X O O O 
 // 7 O O O O O O O O 
 @external
-func test_jump_with_small_map{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
+func test_find_path_with_small_map{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     alloc_locals;
     let dict_ptr: DictAccess* = create_dict(UNDEFINED);
     
-    tempvar map_grids: felt* = cast(new(O, O, O, O, O, O, O, O,
-                                        O, O, O, O, O, O, O, O,
-                                        O, O, O, O, X, O, O, O,
-                                        O, O, O, O, X, O, O, O,
-                                        O, O, O, O, X, O, O, O,
-                                        O, O, O, O, X, O, O, O,
-                                        O, O, O, O, X, O, O, O,
-                                        O, O, O, O, O, O, O, O),  felt*);
-    let map = Map(map_grids, 8, 8);
+    tempvar map_grids: felt* = cast(new(O, O, O, X, O, O, O, O, O,
+                                        O, O, O, X, O, O, O, O, O,
+                                        O, O, O, X, X, X, O, O, O,
+                                        O, O, O, O, O, X, O, O, O,
+                                        O, O, O, O, O, X, O, O, O,
+                                        O, O, O, O, O, X, O, O, O,
+                                        O, O, O, O, X, X, O, O, O,
+                                        O, O, O, X, X, O, O, O, O,
+                                        O, O, O, O, O, O, O, O, O,),  felt*);
+    let map = Map(map_grids, 9, 9);
 
-    let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=dict_ptr}(1, 3, 6, 3, map);
-    // assert result_after_lenght = 123;
-    // let result_after: Point = jump(2, 3, 1, 4, map, Point(-1, -1, -1));
-    // assert result_after.x = 100;
-
-    // assert result_after = Point(-1, -1, -1);
-
-    // let result_after: Point = jump(4, 6, 3, 6, map, Point(-1, -1, -1));
+    let start_x = 1;
+    let start_y = 4;
+    let end_x = 7;
+    let end_y = 4;
+    let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=dict_ptr}(start_x, start_y, end_x, end_y, map);
 
     return ();
 }

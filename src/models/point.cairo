@@ -169,6 +169,13 @@ func build_reverse_path_from_internal{pedersen_ptr: HashBuiltin*, range_check_pt
     let parent_id = get_point_attribute(point, PARENT);
     if (parent_id != UNDEFINED) {
         let (x, y) = convert_id_to_coords(parent_id, width);
+        %{
+            from requests import post
+            json = { # creating the body of the post request so it's printed in the python script
+                "Node": f"({ids.x}, {ids.y})"
+            }
+            post(url="http://localhost:5000", json=json) # sending the request to our small "server"
+        %}
         assert result[result_lenght] = Point(x, y, TRUE);
         return build_reverse_path_from_internal(Point(x, y, TRUE), width, result, result_lenght + 1);
     } else {
