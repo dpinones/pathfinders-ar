@@ -49,7 +49,6 @@ func find_path_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: D
     }
 
     let node = [open_list];
-
     if (node.x == goal.x and node.y == goal.y) {
         return build_reverse_path_from(node, map.width);
     }

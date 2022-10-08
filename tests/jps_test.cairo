@@ -9,7 +9,7 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.dict import DictAccess
 
 from src.utils.dictionary import create_dict
-from src.models.point import Point
+from src.models.point import Point, contains_all_points_equals
 from src.models.map import Map
 from src.utils.map_factory import generate_map_without_obstacles
 from src.jps import jump, find_path
@@ -369,125 +369,82 @@ func test_jump_with_diagonal_down_left_obstacle_in_y_minus_1{range_check_ptr, pe
     return ();
 }
 
-// Giving parent (P) and actual (A) has an obstacle in (y - 1) position
-// When call jump()
-// Then method will return actual node as jump point
-// Map width = 20, height = 10
-//   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9
-// 0 O O O O O O O O O O O O O O O O O O O O
-// 1 O O X O O O O O O O O O O O X O O O O O
-// 2 O O X O O P O O O O O O O X X O O O O O
-// 3 O O X O O O A O O O O O X X X X O O O O
-// 4 O X X X O O O O J X X X X X X X O O O O
-// 5 O O X O O O O O O O O O O O O X X O O O
-// 6 O O X O O O X X X O O O O O O X X O O O
-// 7 O O O O O O O O O O O O O O O O O O O O
-// 8 O O O O O O O O O O O O O O O O O O O O
-// 9 O O O O O O O O O O O O O O O O O O O O
-@external
-func test_find_path_with_large_map{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
-    alloc_locals;
-    let dict_ptr: DictAccess* = create_dict(UNDEFINED);
-    tempvar map_grids: felt* = cast(new(O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-                                        O, O, X, O, O, O, O, O, O, O, O, O, O, O, X, O, O, O, O, O,
-                                        O, O, X, O, O, O, O, O, O, O, O, O, O, X, X, O, O, O, O, O,
-                                        O, O, X, O, O, O, O, O, O, O, O, O, O, X, X, O, O, O, O, O,
-                                        O, X, X, X, O, O, O, O, O, O, O, O, X, X, X, X, O, O, O, O,
-                                        O, O, X, O, O, O, O, O, O, X, X, X, X, X, X, X, O, O, O, O,
-                                        O, O, X, O, O, O, O, O, O, O, O, O, O, O, O, X, X, O, O, O,
-                                        O, O, X, O, O, O, X, X, X, O, O, O, O, O, O, X, X, O, O, O,
-                                        O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O,
-                                        O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O, O),  felt*);
-    let map = Map(map_grids, 20, 10);
-    let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=dict_ptr}(1, 7, 14, 7, map);
-    // let result_after: Point = jump(3, 6, 2, 5, map, Point(-1, -1, -1));
-    // assert result_after_lenght = 123;
-    // let result_after: Point = jump(4, 6, 3, 6, map, Point(-1, -1, -1));
-    // assert result_after = Point(-1, -1, -1);
-    return ();
-}
-
-// Giving parent (P) and actual (A) has an obstacle in (y - 1) position
-// When call jump()
-// Then method will return actual node as jump point
-// Map width = 20, height = 10
-//   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9
-// 0 O O O O O O O O O O O O O O O O O O O O
-// 1 O O X O O O O O O O O O O O X O O O O O
-// 2 O O X O O P O O O O O O O X X O O O O O
-// 3 O O X O O O A O O O O O X X X X O O O O
-// 4 O X X X O O O O J X X X X X X X O O O O
-// 5 O O X O O O O O O O O O O O O X X O O O
-// 6 O O X O O O X X X O O O O O O X X O O O
-// 7 O O O O O O O O O O O O O O O O O O O O
-// 8 O O O O O O O O O O O O O O O O O O O O
-// 9 O O O O O O O O O O O O O O O O O O O O
-@external
-func test_find_path_with_large_map2{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
-    alloc_locals;
-    let dict_ptr: DictAccess* = create_dict(UNDEFINED);
-    tempvar map_grids: felt* = cast(new(
-            O, O, O, O, O, O, O, O, X, O, O, O, O, O, X, X, X, O, O, O, 
-            O, O, O, O, O, O, O, X, O, O, O, O, O, O, X, O, O, O, O, O,
-            O, O, O, O, O, O, X, O, O, O, O, O, O, X, X, O, X, X, X, X,
-            O, O, O, O, O, X, X, O, O, O, O, O, O, X, O, O, X, O, O, O,
-            O, O, O, O, O, X, O, O, O, O, O, O, X, O, O, O, X, O, O, O,
-            O, O, O, O, O, X, O, O, X, O, O, X, X, O, O, O, X, X, X, X,
-            O, O, O, O, O, X, O, O, X, O, O, X, O, O, O, O, O, O, O, O,
-            O, O, O, O, X, X, O, X, O, O, X, O, O, O, O, O, O, O, O, O,
-            O, O, O, O, X, O, X, O, O, O, X, O, O, O, O, O, X, X, O, O,
-            O, O, O, X, O, O, X, O, O, X, O, O, O, O, O, X, X, X, O, O,
-            O, O, O, X, O, O, X, O, O, X, O, O, O, O, X, X, O, X, O, O,
-            O, O, O, X, O, O, X, O, X, X, O, O, O, X, O, O, O, O, X, O,
-            O, O, O, X, X, X, X, X, X, O, O, X, X, O, O, O, O, O, X, O,
-            O, O, O, O, O, X, X, O, O, O, X, X, O, O, O, O, O, O, X, O,
-            O, X, O, O, O, O, O, O, X, X, O, O, O, O, O, O, O, O, X, O,
-            X, X, X, X, X, X, X, O, X, O, O, O, O, X, O, O, O, O, X, O,
-            O, O, X, O, X, X, X, X, X, O, O, O, O, X, O, O, O, O, X, O,
-            O, O, O, O, X, X, X, O, X, O, O, O,  O, X, O, O, O, O, X, O,
-            O, O, O, O, O, X, O, X, X, O, O, O, O, X, X, X, X, X, X, O,
-            O, O, X, O, O, X, O, O, X, O, O, O, O, O, O, O, O, O, O, O),  felt*);
-    let map = Map(map_grids, 20, 20);
-    let start_x = 2;
-    let start_y = 2;
-    let end_x = 17;
-    let end_y = 16;
-    let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=dict_ptr}(start_x, start_y, end_x, end_y, map);
-
-    return ();
-}
-
-// Map width = 8, height = 8
-//   0 1 2 3 4 5 6 7 
-// 0 O O O O O O O O 
-// 1 O O O O O O O O 
-// 2 O O O O X O O O 
-// 3 O P A O X O M O 
-// 4 O O O O X O O O 
-// 5 O O O O X O O O 
-// 6 O O O O X O O O 
-// 7 O O O O O O O O 
+//   0 1 2 3 4 5  
+// 0 O O O O X O  
+// 1 O S O X G O  
+// 2 O O O X X O  
+// 3 O O X O O O  
+// 4 O O O X O X  
+// 5 O X O O O X  
+// S: Start, G: Goal
+// Map width = 6, height = 6
 @external
 func test_find_path_with_small_map{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     alloc_locals;
     let dict_ptr: DictAccess* = create_dict(UNDEFINED);
-    
-    tempvar map_grids: felt* = cast(new(O, O, O, X, O, O, O, O, O,
-                                        O, O, O, X, O, O, O, O, O,
-                                        O, O, O, X, X, X, O, O, O,
-                                        O, O, O, O, O, X, O, O, O,
-                                        O, O, O, O, O, X, O, O, O,
-                                        O, O, O, O, O, X, O, O, O,
-                                        O, O, O, O, X, X, O, O, O,
-                                        O, O, O, X, X, O, O, O, O,
-                                        O, O, O, O, O, O, O, O, O,),  felt*);
-    let map = Map(map_grids, 9, 9);
+    tempvar map_grids: felt* = cast(new(O,O,O,O,X,O,
+                                        O,O,O,X,O,O,
+                                        O,O,O,X,X,O,
+                                        O,O,X,O,O,O,
+                                        O,O,O,X,O,X,
+                                        O,X,O,O,O,X), felt*);
+    let map = Map(map_grids, 6, 6);
 
     let start_x = 1;
-    let start_y = 4;
-    let end_x = 7;
-    let end_y = 4;
+    let start_y = 1;
+    let end_x = 4;
+    let end_y = 1;
     let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=dict_ptr}(start_x, start_y, end_x, end_y, map);
+
+    let expected_result_points: Point* = alloc();
+    let expected_result_points_lenght = 8;
+    assert expected_result_points[0] = Point(1, 1, TRUE);
+    assert expected_result_points[1] = Point(1, 3, TRUE);
+    assert expected_result_points[2] = Point(2, 4, TRUE);
+    assert expected_result_points[3] = Point(3, 5, TRUE);
+    assert expected_result_points[4] = Point(4, 4, TRUE);
+    assert expected_result_points[5] = Point(5, 3, TRUE);
+    assert expected_result_points[6] = Point(5, 2, TRUE);
+    assert expected_result_points[7] = Point(4, 1, TRUE);
+
+    let paths_are_equals = contains_all_points_equals(result_after, result_after_lenght, expected_result_points, expected_result_points_lenght);
+    assert paths_are_equals = TRUE;
+
+    return ();
+}
+
+//   0 1 2 3 4 5  
+// 0 O O O O X O  
+// 1 O S O X G O  
+// 2 O O O X X O  
+// 3 O O X O O O  
+// 4 O O O X O X  
+// 5 O X O X O X  
+// S: Start, G: Goal
+// Map width = 6, height = 6
+@external
+func test_find_path_with_small_map_non_solution{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
+    alloc_locals;
+    let dict_ptr: DictAccess* = create_dict(UNDEFINED);
+    tempvar map_grids: felt* = cast(new(O,O,O,O,X,O,
+                                        O,O,O,X,O,O,
+                                        O,O,O,X,X,O,
+                                        O,O,X,O,O,O,
+                                        O,O,O,X,O,X,
+                                        O,X,O,X,O,X), felt*);
+    let map = Map(map_grids, 6, 6);
+
+    let start_x = 1;
+    let start_y = 1;
+    let end_x = 4;
+    let end_y = 1;
+    let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=dict_ptr}(start_x, start_y, end_x, end_y, map);
+
+    let expected_result_points: Point* = alloc();
+    let expected_result_points_lenght = 0;
+
+    let paths_are_equals = contains_all_points_equals(result_after, result_after_lenght, expected_result_points, expected_result_points_lenght);
+    assert paths_are_equals = TRUE;
 
     return ();
 }
