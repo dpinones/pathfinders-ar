@@ -143,20 +143,6 @@ func _contains_all_points_equals(points: Point*, points_lenght: felt, other: Poi
     return _contains_all_points_equals(points + Point.SIZE, points_lenght - 1, other , other_lenght);
 }
 
-// Verify if two points are equals
-//
-// @param: point - point to compare.
-// @param: other - other point to compare.
-// @return: felt - TRUE if points are equals, FALSE otherwise.
-func point_equals(point: Point, other: Point) -> felt {
-    tempvar x_equal = _equals(point.x, other.x);
-    tempvar y_equal = _equals(point.y, other.y);
-    tempvar walkable_equal = _equals(point.walkable, other.walkable);
-    tempvar points_are_equals = _and(x_equal, _and(y_equal, walkable_equal));
-
-    return points_are_equals;
-}
-
 // Returns a list with all the nodes linked by the parent attribute.
 //
 // @param: point - Initial node to get its parents.
@@ -178,4 +164,18 @@ func _build_reverse_path_from{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_
     } else {
         return (result_lenght, result);    
     }
+}
+
+// Verify if two points are equals
+//
+// @param: point - point to compare.
+// @param: other - other point to compare.
+// @return: felt - TRUE if points are equals, FALSE otherwise.
+func point_equals(point: Point, other: Point) -> felt {
+    tempvar x_equal = _equals(point.x, other.x);
+    tempvar y_equal = _equals(point.y, other.y);
+    tempvar walkable_equal = _equals(point.walkable, other.walkable);
+    tempvar points_are_equals = _and(x_equal, _and(y_equal, walkable_equal));
+
+    return points_are_equals;
 }
