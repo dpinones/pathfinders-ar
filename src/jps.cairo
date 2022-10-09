@@ -1,22 +1,20 @@
 %lang starknet
-from starkware.cairo.common.math_cmp import is_in_range, is_not_zero, is_le
-from starkware.cairo.common.cairo_builtins import HashBuiltin
+
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.bool import TRUE, FALSE
-from starkware.cairo.common.dict import dict_write, dict_update, dict_read, DictAccess
-from starkware.cairo.common.hash import hash2
+from starkware.cairo.common.cairo_builtins import HashBuiltin
+from starkware.cairo.common.dict import DictAccess
 from starkware.cairo.common.math import abs_value
-from starkware.cairo.common.registers import get_fp_and_pc
+from starkware.cairo.common.math_cmp import is_le
 
-from src.utils.condition import _or, _and, _not, _equals
-from src.utils.dictionary import add_entries, create_dict, read_entry, update_entry, write_entry
-from src.models.heuristic import octile, manhattan
-from src.models.map import Map, get_point_by_position, get_neighbours, is_inside_of_map, is_walkable_at
-from src.models.movement import Movement
-from src.models.point import Point, point_equals, set_point_attribute, get_point_attribute, build_reverse_path_from
-from src.utils.point_converter import convert_coords_to_id
 from src.constants.point_status import OPENED, CLOSED
 from src.constants.point_attribute import STATUS, DISTANCE_TRAVELED, PARENT, DISTANCE_TO_GOAL, ESTIMATED_TOTAL_PATH_DISTANCE, UNDEFINED
+from src.models.heuristic import manhattan
+from src.models.map import Map, get_point_by_position, get_neighbours, is_walkable_at
+from src.models.point import Point, point_equals, set_point_attribute, get_point_attribute, build_reverse_path_from
+from src.utils.condition import _or, _and, _not, _equals
+from src.utils.dictionary import create_dict
+from src.utils.point_converter import convert_coords_to_id
 
 func find_path{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*}(start_x: felt, start_y: felt, end_x: felt, end_y: felt, map: Map) -> (felt, Point*) {
     alloc_locals;
@@ -65,7 +63,6 @@ func identify_successors{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: 
 
 func identify_successors_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*, open_list: Point*, open_list_lenght}(neighbours: Point*, neighbours_lenght: felt, parent: Point, goal: Point, map: Map) {
     alloc_locals;
-    let (local __fp__, _) = get_fp_and_pc();
     if (neighbours_lenght == 0) {
         return ();
     }
@@ -140,7 +137,6 @@ func identify_successors_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, d
         tempvar dict_ptr = dict_ptr;
         tempvar open_list_lenght = open_list_lenght;
     }
-
     return identify_successors_internal(neighbours + Point.SIZE, neighbours_lenght - 1, parent, goal, map);
 }
 

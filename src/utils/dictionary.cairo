@@ -1,9 +1,9 @@
 %lang starknet
 
-from starkware.cairo.common.dict_access import DictAccess
+from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.default_dict import default_dict_new, default_dict_finalize
 from starkware.cairo.common.dict import dict_write, dict_read, dict_update
-from starkware.cairo.common.alloc import alloc
+from starkware.cairo.common.dict_access import DictAccess
 
 // Credits to: @parketh for the original implementation.
 
