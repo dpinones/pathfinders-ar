@@ -7,7 +7,7 @@ from starkware.cairo.common.math_cmp import is_in_range
 from starkware.cairo.common.dict import DictAccess
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 
-from src.models.point import Point, contains_point, contains_point_equals, get_point_attribute
+from src.models.point import Point, get_point_attribute
 from src.constants.point_attribute import PARENT, UNDEFINED
 from src.constants.grid import X, O
 from src.utils.condition import _and, _equals, _max, _not, _or
@@ -69,6 +69,12 @@ func is_walkable_at{range_check_ptr}(map: Map, x: felt, y: felt) -> felt {
     return TRUE;
 }
 
+// Check if the (x,y) coordinates are inside of the map.
+//
+// @param: map - Map from which we want to verify.
+// @param: x - X position.
+// @param: y - Y position.
+// @return: Point - Returns TRUE if point is in the map, FALSE otherwise.
 func is_inside_of_map{range_check_ptr}(map: Map, x: felt, y: felt) -> felt {
     let is_in_range_x = is_in_range(x, 0, map.width);
     let is_in_range_y = is_in_range(y, 0, map.height);
@@ -78,15 +84,24 @@ func is_inside_of_map{range_check_ptr}(map: Map, x: felt, y: felt) -> felt {
     return res;
 }
 
-func get_neighbours{range_check_ptr, pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(map: Map, grid: Point) -> (felt, Point*) {
+// Returns the neighbors of the point (x, y) on the map.
+// Depending on whether the point has a parent or not, 
+// some strategy will be executed that allows us to optimize 
+// the number of relevant neighboring nodes that we will return.
+// This method is based on "if at most one obstacle" logic.
+//
+// @param: map - Map from which we want to verify.
+// @param: point - Point from which you want to get the neighbors.
+// @return: (felt, Point*) - The list of neighbours of point.
+func get_neighbours{range_check_ptr, pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(map: Map, point: Point) -> (felt, Point*) {
     alloc_locals;
-    let parent_id = get_point_attribute{pedersen_ptr = pedersen_ptr, dict_ptr = dict_ptr}(grid, PARENT);
+    let parent_id = get_point_attribute{pedersen_ptr = pedersen_ptr, dict_ptr = dict_ptr}(point, PARENT);
 
     if (parent_id == UNDEFINED) {
-        return _get_neighbours(map, grid.x, grid.y);
+        return _get_neighbours(map, point.x, point.y);
     } else {
         let (px, py) = convert_id_to_coords(parent_id, map.width);
-        return _prune_neighbours(grid.x, grid.y, px, py, map);
+        return _prune_neighbours(point.x, point.y, px, py, map);
     }
 }
 
@@ -138,7 +153,6 @@ func _prune_neighbours{range_check_ptr, pedersen_ptr: HashBuiltin*, dict_ptr: Di
     }
     return (relevant_neighbours_len, relevant_neighbours);
 }
-
 
 func _get_neighbours{range_check_ptr, pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(map: Map, x: felt, y: felt) -> (felt, Point*) {
     alloc_locals;
@@ -214,6 +228,11 @@ func _get_neighbours{range_check_ptr, pedersen_ptr: HashBuiltin*, dict_ptr: Dict
     return (relevant_neighbours_len, relevant_neighbours);
 }
 
+// Verify if two maps are equals
+//
+// @param: map - map to compare.
+// @param: other - other map to compare.
+// @return: felt - TRUE if maps are equals, FALSE otherwise.
 func map_equals(map: Map, other: Map) -> felt {
     let has_same_height = _equals(map.height, other.height);
     let has_same_width = _equals(map.width, other.width);
@@ -239,7 +258,6 @@ func _map_equals(grids: felt*, other_grids: felt*, index: felt, map_lenght: felt
 }
 
 // Aux methods
-
 func check_and_add_point{range_check_ptr}(map: Map, x: felt, y: felt, relevant_x: felt, relevant_y: felt, walkable_condition: felt, relevant_neighbours_len: felt, relevant_neighbours: Point*) -> (felt) {
     let is_walkable = is_walkable_at(map, x, y);
     if (is_walkable == walkable_condition) {
@@ -282,4 +300,3 @@ func check_and_add_point_double_or_condition{range_check_ptr}(map: Map, first_x:
         return (relevant_neighbours_len,);
     }
 }
-
