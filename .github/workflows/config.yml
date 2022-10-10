@@ -17,7 +17,7 @@ jobs:
     - name: Install Protostar
       run: curl -L https://raw.githubusercontent.com/software-mansion/protostar/master/install.sh | bash
     - name: Protostar build
-      run:
+      run: |
         source /home/runner/.bashrc
         protostar build
 
@@ -28,6 +28,6 @@ jobs:
     - name: Install Protostar
       run: curl -L https://raw.githubusercontent.com/software-mansion/protostar/master/install.sh | bash
     - name: Protostar tests
-      run:
+      run: |
         source /home/runner/.bashrc
         protostar test
