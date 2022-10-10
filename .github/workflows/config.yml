@@ -13,10 +13,10 @@ jobs:
     - uses: actions/checkout@v3
     - name: Install Protostar
       run: curl -L https://raw.githubusercontent.com/software-mansion/protostar/master/install.sh | bash
+    - name: Restart terminal
+      run: reset
     - name: Protostar build
-      run: |
-        source ~/.bashrc
-        protostar build
+      run: protostar build
 
   test:
     runs-on: ubuntu-latest
@@ -24,7 +24,7 @@ jobs:
     - uses: actions/checkout@v3
     - name: Install Protostar
       run: curl -L https://raw.githubusercontent.com/software-mansion/protostar/master/install.sh | bash
+    - name: Restart terminal
+      run: reset
     - name: Protostar tests
-      run: |
-        source ~/.bashrc
-        protostar test
+      run: protostar test
