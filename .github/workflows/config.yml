@@ -9,22 +9,38 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.9", "3.10"]
     steps:
     - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
     - name: Install Protostar
       run: curl -L https://raw.githubusercontent.com/software-mansion/protostar/master/install.sh | bash
     - name: Restart terminal
-      run: reset
+      run: tput reset && source ~/.profile
     - name: Protostar build
       run: protostar build
 
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.9", "3.10"]
     steps:
     - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
     - name: Install Protostar
       run: curl -L https://raw.githubusercontent.com/software-mansion/protostar/master/install.sh | bash
     - name: Restart terminal
-      run: reset
+      run: tput reset && source ~/.profile
     - name: Protostar tests
       run: protostar test
