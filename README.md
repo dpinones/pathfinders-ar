@@ -7,11 +7,25 @@ Introduction
 This project was developed for the MatchBoxDAO Hackathon, the idea is to develop in Cairo an algorithm that solves the path search problem for a map represented in 2D grids.
 The map may contain obstacles, furthermore we assume that the movement in the squares is bidirectional with a uniform movement cost.
 
-It is currently uploaded to Testnet and you can test how it works by entering the [following link](), in this example we will be able to set obstacles in a map of n*m that will later work as input in the algorithm. Once finished, the jump points that were chosen to reach the goal will be displayed.
+It is currently uploaded to Testnet and you can test how it works by entering the [following link](https://dpinones.github.io/pathfinding-visualizer/)(the credit a [Rohith](https://github.com/rohithaug)), in this example we will be able to set obstacles in a map of n*m that will later work as input in the algorithm. Once finished, the jump points that were chosen to reach the goal will be displayed.
 
 How to use it?
 ------------
+1. Using view function [Cairo Contract](https://goerli.voyager.online/contract/0x04cdb56f4057b6ccbb2c859fccd0abce3983008365bdfbffd9b27f957946fce6#readContract).
+```
+start_x: int
+start_y: int
+end_x: int 
+end_y: int
+grids: int[] // Example: [0, 0 , 0, 1, 1, ..., 0],  0 = walkable, 1 = obstacle
+width: int // This value determines how many divisions the grid array will have.
+height: int 
+```
+Input example in [test](https://github.com/dpinones/pathfinders-ar/blob/main/tests/jps_test.cairo#L382)
 
+2. Using the web app in [link](https://dpinones.github.io/pathfinding-visualizer/).
+
+![Screenshot from 2022-10-11 12-46-54](https://user-images.githubusercontent.com/30808181/195159959-2e899199-f301-49c8-a0e9-23666677b473.png)
 
 Performance examples
 ------------
