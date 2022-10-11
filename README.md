@@ -7,12 +7,14 @@ Introduction
 This project was developed for the MatchBoxDAO Hackathon, the idea is to develop in Cairo an algorithm that solves the path search problem for a map represented in 2D grids.
 The map may contain obstacles, furthermore we assume that the movement in the squares is bidirectional with a uniform movement cost.
 
-It is currently uploaded to Testnet and you can test how it works by entering the [following link](https://dpinones.github.io/pathfinding-visualizer/)(the credit a [Rohith](https://github.com/rohithaug)), in this example we will be able to set obstacles in a map of n*m that will later work as input in the algorithm. Once finished, the jump points that were chosen to reach the goal will be displayed.
+It is currently uploaded to Testnet and you can test how it works by entering the [following link](https://dpinones.github.io/pathfinding-visualizer/) (credits to [Rohith](https://github.com/rohithaug)), in this example we will be able to set obstacles in a map of n*m that will later work as input in the algorithm. Once finished, the jump points that were chosen to reach the goal will be displayed.
 
 How to use it?
 ------------
 1. Using view function [Cairo Contract](https://goerli.voyager.online/contract/0x04cdb56f4057b6ccbb2c859fccd0abce3983008365bdfbffd9b27f957946fce6#readContract).
 ```
+The position (0,0) on the map starts at the top left, positions increase in the opposite direction
+
 start_x: int
 start_y: int
 end_x: int 
@@ -34,7 +36,8 @@ Performance examples
 Next steps
 ------------
 Given that we had a limited time to understand, program and show the algorithm, things were pending that we would like to develop in the future:
-- Optimize the JPS algorithm currently implemented (look for improvements in terms of data structure management, variables, steps)
+- Optimize the JPS algorithm currently implemented (look for improvements in terms of data structure management, variables, steps).
+- From a map of size 25 *25 we notice that the contract cannot solve the problem, due to the amount of resources consumed by the algorithm.
 - Implement different path search algorithms such as BFS, A*, Dijkstra, HPA*, etc.
 
 Useful links
