@@ -30,7 +30,10 @@ Input example in [test](https://github.com/dpinones/pathfinders-ar/blob/main/tes
 ![Screenshot from 2022-10-11 12-46-54](https://user-images.githubusercontent.com/30808181/195159959-2e899199-f301-49c8-a0e9-23666677b473.png)
 
 Performance examples
+------------
+
 The following grid shows approximate values just to get an idea of the response performance as the size of the map grows. The maps were generated in the visualizer that we mentioned earlier.
+
 ------------------------------------------------------------------------------------------------------------
 |Map dimension|Clean map|Random maze|Recursive division maze|Vertical division maze|Horizontal division maze|
 | --- | --- | --- | --- | --- | --- |
