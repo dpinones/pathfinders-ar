@@ -33,13 +33,6 @@ func heap_create{range_check_ptr}() -> (heap : DictAccess*, heap_len : felt) {
 // @return new_len : New length of heap
 func add{range_check_ptr, pedersen_ptr: HashBuiltin*, heap: DictAccess*}(heap_len: felt, grid_id: felt, val: felt) -> felt {
     alloc_locals;        
-    %{
-        from requests import post
-        json = { # creating the body of the post request so it's printed in the python script
-            "min_heap": f"add (({ids.grid_id}), f value: {ids.val}, heap_len: {ids.heap_len+1})"
-        }
-        post(url="http://localhost:5000", json=json) # sending the request to our small "server"
-    %}
     dict_write{dict_ptr=heap}(key=heap_len, new_value=grid_id);
     let (attribute_hash) = hash2{hash_ptr=pedersen_ptr}(grid_id, G_VALUE);
     dict_write{dict_ptr=heap}(key=attribute_hash, new_value=val);
@@ -76,13 +69,6 @@ func poll{range_check_ptr, pedersen_ptr: HashBuiltin*, heap : DictAccess*}(heap_
         tempvar heap=heap;
         tempvar pedersen_ptr=pedersen_ptr;
     }
-    %{
-        from requests import post
-        json = { # creating the body of the post request so it's printed in the python script
-            "poll": f"poll ({ids.start_grid_id})  f value: {ids.start_g_value}, heap_len: {ids.heap_len-1})"
-        }
-        post(url="http://localhost:5000", json=json) # sending the request to our small "server"
-    %}
     return (start_grid_id, start_g_value, heap_len-1);
 }
 
