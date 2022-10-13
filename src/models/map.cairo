@@ -93,9 +93,9 @@ func is_inside_of_map{range_check_ptr}(map: Map, x: felt, y: felt) -> felt {
 // @param: map - Map from which we want to verify.
 // @param: point - Point from which you want to get the neighbors.
 // @return: (felt, Point*) - The list of neighbours of point.
-func get_neighbours{range_check_ptr, pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(map: Map, point: Point) -> (felt, Point*) {
+func get_neighbours{range_check_ptr, pedersen_ptr: HashBuiltin*, point_attribute: DictAccess*}(map: Map, point: Point) -> (felt, Point*) {
     alloc_locals;
-    let parent_id = get_point_attribute{pedersen_ptr = pedersen_ptr, dict_ptr = dict_ptr}(point, PARENT);
+    let parent_id = get_point_attribute{pedersen_ptr = pedersen_ptr, point_attribute = point_attribute}(point, PARENT);
 
     if (parent_id == UNDEFINED) {
         return _get_neighbours(map, point.x, point.y);
@@ -105,7 +105,7 @@ func get_neighbours{range_check_ptr, pedersen_ptr: HashBuiltin*, dict_ptr: DictA
     }
 }
 
-func _prune_neighbours{range_check_ptr, pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(x: felt, y: felt, px: felt, py: felt, map: Map) -> (felt, Point*) {
+func _prune_neighbours{range_check_ptr, pedersen_ptr: HashBuiltin*, point_attribute: DictAccess*}(x: felt, y: felt, px: felt, py: felt, map: Map) -> (felt, Point*) {
     alloc_locals;
     let relevant_neighbours: Point* = alloc(); 
     local relevant_neighbours_len = 0;
@@ -154,7 +154,7 @@ func _prune_neighbours{range_check_ptr, pedersen_ptr: HashBuiltin*, dict_ptr: Di
     return (relevant_neighbours_len, relevant_neighbours);
 }
 
-func _get_neighbours{range_check_ptr, pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(map: Map, x: felt, y: felt) -> (felt, Point*) {
+func _get_neighbours{range_check_ptr, pedersen_ptr: HashBuiltin*, point_attribute: DictAccess*}(map: Map, x: felt, y: felt) -> (felt, Point*) {
     alloc_locals;
     let relevant_neighbours: Point* = alloc(); 
     local relevant_neighbours_len = 0;

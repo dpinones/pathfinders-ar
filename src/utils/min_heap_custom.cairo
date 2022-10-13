@@ -26,6 +26,27 @@ func heap_create{range_check_ptr}() -> (heap : DictAccess*, heap_len : felt) {
     return (heap, 0);
 }
 
+// Insert new value to max heap.
+// @dev Heap must be passed as an implicit argument
+// @param heap_len : Length of heap
+// @param val : New value to insert into heap
+// @return new_len : New length of heap
+func add{range_check_ptr, pedersen_ptr: HashBuiltin*, heap: DictAccess*}(heap_len: felt, grid_id: felt, val: felt) -> felt {
+    alloc_locals;        
+    %{
+        from requests import post
+        json = { # creating the body of the post request so it's printed in the python script
+            "min_heap": f"add (({ids.grid_id}), f value: {ids.val}, heap_len: {ids.heap_len+1})"
+        }
+        post(url="http://localhost:5000", json=json) # sending the request to our small "server"
+    %}
+    dict_write{dict_ptr=heap}(key=heap_len, new_value=grid_id);
+    let (attribute_hash) = hash2{hash_ptr=pedersen_ptr}(grid_id, G_VALUE);
+    dict_write{dict_ptr=heap}(key=attribute_hash, new_value=val);
+    heapifyUp(heap_len, heap_len);
+    return heap_len + 1;
+}
+
 // Delete root value from max heap.
 // @dev Heap must be passed as an implicit argument
 // @dev tempvars used to handle revoked references for implicit args
@@ -34,7 +55,7 @@ func heap_create{range_check_ptr}() -> (heap : DictAccess*, heap_len : felt) {
 func poll{range_check_ptr, pedersen_ptr: HashBuiltin*, heap : DictAccess*}(heap_len: felt) -> (felt, felt, felt) {
     alloc_locals; 
     if (heap_len == 0) {
-        return (UNDEFINED, UNDEFINED, UNDEFINED);
+        return (UNDEFINED, UNDEFINED, 0);
     }     
     let (start_grid_id) = dict_read{dict_ptr=heap}(key=0);
     let (attribute_hash) = hash2{hash_ptr=pedersen_ptr}(start_grid_id, G_VALUE);
@@ -55,20 +76,14 @@ func poll{range_check_ptr, pedersen_ptr: HashBuiltin*, heap : DictAccess*}(heap_
         tempvar heap=heap;
         tempvar pedersen_ptr=pedersen_ptr;
     }
+    %{
+        from requests import post
+        json = { # creating the body of the post request so it's printed in the python script
+            "poll": f"poll ({ids.start_grid_id})  f value: {ids.start_g_value}, heap_len: {ids.heap_len-1})"
+        }
+        post(url="http://localhost:5000", json=json) # sending the request to our small "server"
+    %}
     return (start_grid_id, start_g_value, heap_len-1);
-}
-
-
-// Insert new value to max heap.
-// @dev Heap must be passed as an implicit argument
-// @param heap_len : Length of heap
-// @param val : New value to insert into heap
-// @return new_len : New length of heap
-func add{range_check_ptr, pedersen_ptr: HashBuiltin*, heap: DictAccess*}(heap_len: felt, grid_id: felt, val: felt) -> felt {
-    alloc_locals;
-    dict_write{dict_ptr=heap}(key=heap_len, new_value=grid_id);
-    heapifyUp(heap_len, heap_len);
-    return heap_len + 1;
 }
 
 func heapifyUp{range_check_ptr, pedersen_ptr: HashBuiltin*, heap: DictAccess*}(idx: felt, heap_len: felt) {
@@ -82,7 +97,7 @@ func heapifyUp{range_check_ptr, pedersen_ptr: HashBuiltin*, heap: DictAccess*}(i
     let (attribute_hash) = hash2{hash_ptr=pedersen_ptr}(node_grid_id, G_VALUE);
     let (node_g_value) = dict_read{dict_ptr=heap}(key=attribute_hash);
     
-    let (parent_idx, _) = unsigned_div_rem(idx - 1, 2);
+    let parent_idx = get_parent_idx(idx);
     let (parent_grid_id) = dict_read{dict_ptr=heap}(key=parent_idx);
     let (attribute_hash) = hash2{hash_ptr=pedersen_ptr}(parent_grid_id, G_VALUE);
     let (parent_g_value) = dict_read{dict_ptr=heap}(key=attribute_hash);
@@ -100,14 +115,14 @@ func heapifyUp{range_check_ptr, pedersen_ptr: HashBuiltin*, heap: DictAccess*}(i
 
 func heapifyDown{range_check_ptr, pedersen_ptr: HashBuiltin*, heap: DictAccess*}(idx: felt, heap_len: felt) {
     alloc_locals;
-    let (node_grid_value) = dict_read{dict_ptr=heap}(key=idx);
-    let (attribute_hash) = hash2{hash_ptr=pedersen_ptr}(node_grid_value, G_VALUE);
-    let (node_g_value) = dict_read{dict_ptr=heap}(key=attribute_hash);
-    
     let node_has_left_child = has_left_child(idx, heap_len); 
     if (node_has_left_child == FALSE) {
         return();
     }
+    let (node_grid_id) = dict_read{dict_ptr=heap}(key=idx);
+    let (attribute_hash) = hash2{hash_ptr=pedersen_ptr}(node_grid_id, G_VALUE);
+    let (node_g_value) = dict_read{dict_ptr=heap}(key=attribute_hash);
+
     let smallest_child_idx = get_smallest_child_idx(idx, heap_len);
 
     tempvar range_check_ptr = range_check_ptr;
@@ -134,13 +149,13 @@ func heapifyDown{range_check_ptr, pedersen_ptr: HashBuiltin*, heap: DictAccess*}
 func get_smallest_child_idx{range_check_ptr, pedersen_ptr: HashBuiltin*, heap: DictAccess*}(idx: felt, heap_len: felt) -> felt {
     alloc_locals;
     let left_child_idx = get_left_child_idx(idx);
-    let left_child_value = left_child(idx);
-    let (attribute_hash) = hash2{hash_ptr=pedersen_ptr}(left_child_value, G_VALUE);
+    let left_child_grid_value = left_child(idx);
+    let (attribute_hash) = hash2{hash_ptr=pedersen_ptr}(left_child_grid_value, G_VALUE);
     let (left_g_value) = dict_read{dict_ptr=heap}(key=attribute_hash);
     
     let node_has_right_child = has_right_child(idx, heap_len);
-    let right_child_value = right_child(idx);
-    let (attribute_hash) = hash2{hash_ptr=pedersen_ptr}(right_child_value, G_VALUE);
+    let right_child_grid_value = right_child(idx);
+    let (attribute_hash) = hash2{hash_ptr=pedersen_ptr}(right_child_grid_value, G_VALUE);
     let (right_child_g_value) = dict_read{dict_ptr=heap}(key=attribute_hash);
 
     let right_child_is_smallest = is_less_strict(right_child_g_value, left_g_value); // <
@@ -162,8 +177,8 @@ func get_smallest_child_idx{range_check_ptr, pedersen_ptr: HashBuiltin*, heap: D
 // @param idx_a : Index of first dictionary entry to be swapped
 // @param idx_b : Index of second dictionary entry to be swapped
 func swap{range_check_ptr, pedersen_ptr: HashBuiltin*, heap: DictAccess*} (idx_a: felt, idx_b: felt) {
-    let elem_a = dict_read{dict_ptr=heap}(key=idx_a);
-    let elem_b = dict_read{dict_ptr=heap}(key=idx_b);
+    let (elem_a) = dict_read{dict_ptr=heap}(key=idx_a);
+    let (elem_b) = dict_read{dict_ptr=heap}(key=idx_b);
     dict_update{dict_ptr=heap}(key=idx_a, prev_value=elem_a, new_value=elem_b);
     dict_update{dict_ptr=heap}(key=idx_b, prev_value=elem_b, new_value=elem_a);
     return ();
@@ -206,23 +221,23 @@ func has_parent{range_check_ptr}(idx: felt, heap_len: felt) -> felt {
     return has_parent;
 }
 
-func left_child{heap : DictAccess*}(parent_idx: felt) -> (felt, felt) {
+func left_child{heap : DictAccess*}(parent_idx: felt) -> felt {
     let left_child_idx = get_left_child_idx(parent_idx);
-    let (left_child_grid, left_child_value) = dict_read{dict_ptr=heap}(key=left_child_idx);
+    let (left_child_value) = dict_read{dict_ptr=heap}(key=left_child_idx);
 
-    return (left_child_grid, left_child_value);
+    return left_child_value;
 }
 
-func right_child{heap : DictAccess*}(parent_idx: felt) -> (felt, felt) {
+func right_child{heap : DictAccess*}(parent_idx: felt) -> felt {
     let right_child_idx = get_right_child_idx(parent_idx);
-    let (right_child_grid, right_child_value) = dict_read{dict_ptr=heap}(key=right_child_idx);
+    let (right_child_value) = dict_read{dict_ptr=heap}(key=right_child_idx);
 
-    return (right_child_grid, right_child_value);
+    return right_child_value;
 }
 
-func parent{range_check_ptr, heap : DictAccess*}(child_idx: felt) -> (felt, felt) { 
+func parent{range_check_ptr, heap : DictAccess*}(child_idx: felt) -> felt { 
     let parent_idx = get_parent_idx(child_idx);
-    let (parent_grid, parent_value) = dict_read{dict_ptr=heap}(key=parent_idx);
+    let (parent_value) = dict_read{dict_ptr=heap}(key=parent_idx);
 
-    return (parent_grid, parent_value);
+    return parent_value;
 }

@@ -12,6 +12,7 @@ from src.utils.dictionary import create_dict
 from src.models.point import Point, contains_all_points_equals
 from src.models.map import Map
 from src.utils.map_factory import generate_map_without_obstacles
+from src.utils.min_heap_custom import heap_create
 from src.jps import jump, find_path
 
 // Giving parent (P) and actual (G) 
@@ -381,7 +382,8 @@ func test_jump_with_diagonal_down_left_obstacle_in_y_minus_1{range_check_ptr, pe
 @external
 func test_find_path_with_small_map{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     alloc_locals;
-    let dict_ptr: DictAccess* = create_dict(UNDEFINED);
+    let point_attribute: DictAccess* = create_dict(UNDEFINED);
+    let (heap: DictAccess*, heap_len: felt) = heap_create();
     tempvar map_grids: felt* = cast(new(O,O,O,O,X,O,
                                         O,O,O,X,O,O,
                                         O,O,O,X,X,O,
@@ -394,7 +396,7 @@ func test_find_path_with_small_map{pedersen_ptr: HashBuiltin*, range_check_ptr}(
     let start_y = 1;
     let end_x = 4;
     let end_y = 1;
-    let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=dict_ptr}(start_x, start_y, end_x, end_y, map);
+    let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, point_attribute=point_attribute, heap=heap}(start_x, start_y, end_x, end_y, map);
 
     let expected_result_points: Point* = alloc();
     let expected_result_points_lenght = 8;
@@ -425,7 +427,8 @@ func test_find_path_with_small_map{pedersen_ptr: HashBuiltin*, range_check_ptr}(
 @external
 func test_find_path_with_small_map_non_solution{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     alloc_locals;
-    let dict_ptr: DictAccess* = create_dict(UNDEFINED);
+    let point_attribute: DictAccess* = create_dict(UNDEFINED);
+    let heap: DictAccess* = heap_create();
     tempvar map_grids: felt* = cast(new(O,O,O,O,X,O,
                                         O,O,O,X,O,O,
                                         O,O,O,X,X,O,
@@ -438,7 +441,7 @@ func test_find_path_with_small_map_non_solution{pedersen_ptr: HashBuiltin*, rang
     let start_y = 1;
     let end_x = 4;
     let end_y = 1;
-    let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=dict_ptr}(start_x, start_y, end_x, end_y, map);
+    let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, point_attribute=point_attribute, heap=heap}(start_x, start_y, end_x, end_y, map);
 
     let expected_result_points: Point* = alloc();
     let expected_result_points_lenght = 0;
@@ -458,7 +461,8 @@ func test_find_path_with_small_map_non_solution{pedersen_ptr: HashBuiltin*, rang
 @external
 func test_find_path_with_small_rectangular_map{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
     alloc_locals;
-    let dict_ptr: DictAccess* = create_dict(UNDEFINED);
+    let point_attribute: DictAccess* = create_dict(UNDEFINED);
+    let heap: DictAccess* = heap_create();
     tempvar map_grids: felt* = cast(new(O,X,O,O,O,O,
                                         O,O,O,X,X,O,
                                         O,O,X,O,O,O), felt*);
@@ -468,7 +472,7 @@ func test_find_path_with_small_rectangular_map{pedersen_ptr: HashBuiltin*, range
     let start_y = 2;
     let end_x = 5;
     let end_y = 0;
-    let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=dict_ptr}(start_x, start_y, end_x, end_y, map);
+    let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, point_attribute=point_attribute, heap=heap}(start_x, start_y, end_x, end_y, map);
 
     let expected_result_points: Point* = alloc();
     let expected_result_points_lenght = 5;
@@ -481,5 +485,36 @@ func test_find_path_with_small_rectangular_map{pedersen_ptr: HashBuiltin*, range
     let paths_are_equals = contains_all_points_equals(result_after, result_after_lenght, expected_result_points, expected_result_points_lenght);
     assert paths_are_equals = TRUE;
 
+    return ();
+}
+
+
+@external
+func test_find_path_with_big_map{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
+    alloc_locals;
+    let point_attribute: DictAccess* = create_dict(UNDEFINED);
+    let heap: DictAccess* = heap_create();
+    tempvar map_grids: felt* = cast(new(O,O,O,O,X,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
+                                        O,X,O,O,O,X,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
+                                        O,O,O,O,O,X,O,O,O,O,O,O,X,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
+                                        O,O,O,O,X,X,X,X,X,O,O,O,X,X,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
+                                        O,O,O,O,O,X,O,O,X,X,O,O,X,X,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
+                                        O,X,O,O,O,O,O,O,O,O,X,O,X,X,X,X,X,X,X,X,X,X,X,X,X,O,O,X,X,X,
+                                        O,X,O,O,X,X,O,O,O,O,X,O,X,X,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,
+                                        O,X,O,X,O,O,X,O,O,X,O,O,X,O,O,O,X,X,X,X,X,X,X,X,X,X,O,O,O,O,
+                                        O,X,X,O,O,X,X,O,O,X,O,O,X,O,O,O,O,O,O,O,O,O,O,O,O,O,X,X,O,O,
+                                        X,O,O,O,O,O,O,O,O,O,O,O,X,O,O,O,O,O,O,O,O,O,O,O,O,O,O,O,X,O,
+                                        O,O,O,O,O,X,X,O,O,O,O,O,X,O,O,O,X,X,O,O,O,O,O,O,O,O,O,O,O,X,
+                                        O,O,X,X,O,O,X,O,O,O,O,X,O,O,O,X,O,O,X,X,X,X,X,X,X,X,X,O,O,X,
+                                        O,O,X,X,O,O,X,O,X,O,O,X,X,X,X,O,X,X,O,X,X,O,O,O,O,O,O,O,O,X,
+                                        O,O,X,X,X,O,X,O,X,O,O,O,O,O,O,O,X,X,O,X,O,O,O,O,O,X,O,O,O,X,
+                                        O,O,O,O,O,O,X,O,X,O,O,O,O,O,O,O,O,O,O,X,X,O,O,X,X,X,X,X,X,X), felt*);
+    let map = Map(map_grids, 30, 15);
+
+    let start_x = 1;
+    let start_y = 2;
+    let end_x = 22;
+    let end_y = 13;
+    let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, point_attribute=point_attribute, heap=heap}(start_x, start_y, end_x, end_y, map);
     return ();
 }
