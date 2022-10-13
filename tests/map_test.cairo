@@ -81,10 +81,10 @@ func test_is_inside_of_map_point_outside{range_check_ptr, pedersen_ptr: HashBuil
 @external
 func test_get_neighbours_center_no_obstacles{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let dict_ptr = create_dict(UNDEFINED);
+    let point_attribute = create_dict(UNDEFINED);
     let map = generate_map_without_obstacles(3, 3);
 
-    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(map, Point(1, 1, TRUE));
+    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, Point(1, 1, TRUE));
 
     let points_expected: Point* = alloc();
     let points_expected_len = 8;
@@ -110,10 +110,10 @@ func test_get_neighbours_center_no_obstacles{range_check_ptr, pedersen_ptr: Hash
 @external
 func test_get_neighbours_up_left_corner_no_obstacles{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let dict_ptr = create_dict(UNDEFINED);
+    let point_attribute = create_dict(UNDEFINED);
     let map = generate_map_without_obstacles(3, 3);
 
-    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(map, Point(0, 0, TRUE));
+    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, Point(0, 0, TRUE));
 
     let points_expected: Point* = alloc();
     let points_expected_len = 3;
@@ -134,10 +134,10 @@ func test_get_neighbours_up_left_corner_no_obstacles{range_check_ptr, pedersen_p
 @external
 func test_get_neighbours_middle_up_no_obstacles{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let dict_ptr = create_dict(UNDEFINED);
+    let point_attribute = create_dict(UNDEFINED);
     let map = generate_map_without_obstacles(3, 3);
 
-    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(map, Point(1, 0, TRUE));
+    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, Point(1, 0, TRUE));
 
     let points_expected: Point* = alloc();
     let points_expected_len = 5;
@@ -160,10 +160,10 @@ func test_get_neighbours_middle_up_no_obstacles{range_check_ptr, pedersen_ptr: H
 @external
 func test_get_neighbours_up_right_corner_no_obstacles{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let dict_ptr = create_dict(UNDEFINED);
+    let point_attribute = create_dict(UNDEFINED);
     let map = generate_map_without_obstacles(3, 3);
 
-    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(map, Point(2, 0, TRUE));
+    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, Point(2, 0, TRUE));
 
     let points_expected: Point* = alloc();
     let points_expected_len = 3;
@@ -184,10 +184,10 @@ func test_get_neighbours_up_right_corner_no_obstacles{range_check_ptr, pedersen_
 @external
 func test_get_neighbours_down_right_corner_no_obstacles{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let dict_ptr = create_dict(UNDEFINED);
+    let point_attribute = create_dict(UNDEFINED);
     let map = generate_map_without_obstacles(3, 3);
 
-    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(map, Point(2, 2, TRUE));
+    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, Point(2, 2, TRUE));
 
     let points_expected: Point* = alloc();
     let points_expected_len = 3;
@@ -208,10 +208,10 @@ func test_get_neighbours_down_right_corner_no_obstacles{range_check_ptr, pederse
 @external
 func test_get_neighbours_middle_down_no_obstacles{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let dict_ptr = create_dict(UNDEFINED);
+    let point_attribute = create_dict(UNDEFINED);
     let map = generate_map_without_obstacles(3, 3);
 
-    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(map, Point(1, 2, TRUE));
+    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, Point(1, 2, TRUE));
 
     let points_expected: Point* = alloc();
     let points_expected_len = 5;
@@ -234,10 +234,10 @@ func test_get_neighbours_middle_down_no_obstacles{range_check_ptr, pedersen_ptr:
 @external
 func test_get_neighbours_down_left_corner_no_obstacles{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let dict_ptr = create_dict(UNDEFINED);
+    let point_attribute = create_dict(UNDEFINED);
     let map = generate_map_without_obstacles(3, 3);
 
-    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(map, Point(0, 2, TRUE));
+    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, Point(0, 2, TRUE));
 
     let points_expected: Point* = alloc();
     let points_expected_len = 3;
@@ -258,14 +258,14 @@ func test_get_neighbours_down_left_corner_no_obstacles{range_check_ptr, pedersen
 @external
 func test_get_neighbours_middle_blocked_by_obstacles{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let dict_ptr = create_dict(UNDEFINED);
+    let point_attribute = create_dict(UNDEFINED);
 
     tempvar map_grids: felt* = cast(new(X, O, X,
                                         O, X, O,
                                         O, O, O),  felt*);
     let map = Map(map_grids, 3, 3);
 
-    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(map, Point(1, 0, TRUE));
+    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, Point(1, 0, TRUE));
 
     let points_expected: Point* = alloc();
     let points_expected_len = 0;
@@ -283,14 +283,14 @@ func test_get_neighbours_middle_blocked_by_obstacles{range_check_ptr, pedersen_p
 @external
 func test_get_neighbours_middle_with_one_way{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let dict_ptr = create_dict(UNDEFINED);
+    let point_attribute = create_dict(UNDEFINED);
 
     tempvar map_grids: felt* = cast(new(O, O, X,
                                         O, X, O,
                                         O, O, O),  felt*);
     let map = Map(map_grids, 3, 3);
 
-    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(map, Point(1, 0, TRUE));
+    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, Point(1, 0, TRUE));
 
     let points_expected: Point* = alloc();
     let points_expected_len = 2;
@@ -312,7 +312,7 @@ func test_get_neighbours_middle_with_one_way{range_check_ptr, pedersen_ptr: Hash
 @external
 func test_get_neighbours_with_parent_horizontal_right_direction{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let dict_ptr = create_dict(UNDEFINED);
+    let point_attribute = create_dict(UNDEFINED);
 
     tempvar map_grids: felt* = cast(new(X, O, X, O,
                                         O, O, O, O,
@@ -322,9 +322,9 @@ func test_get_neighbours_with_parent_horizontal_right_direction{range_check_ptr,
 
     let point = Point(1, 1, TRUE);
     let parent_id = convert_coords_to_id(0, 1, 4);
-    set_point_attribute{pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(point, PARENT, parent_id);
+    set_point_attribute{pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(point, PARENT, parent_id);
 
-    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(map, point);
+    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, point);
 
     let points_expected: Point* = alloc();
     let points_expected_len = 1;
@@ -345,7 +345,7 @@ func test_get_neighbours_with_parent_horizontal_right_direction{range_check_ptr,
 @external
 func test_get_neighbours_with_parent_horizontal_left_direction{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let dict_ptr = create_dict(UNDEFINED);
+    let point_attribute = create_dict(UNDEFINED);
 
     tempvar map_grids: felt* = cast(new(X, O, X, O,
                                         O, O, O, O,
@@ -355,9 +355,9 @@ func test_get_neighbours_with_parent_horizontal_left_direction{range_check_ptr, 
 
     let point = Point(1, 1, TRUE);
     let parent_id = convert_coords_to_id(2, 1, 4);
-    set_point_attribute{pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(point, PARENT, parent_id);
+    set_point_attribute{pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(point, PARENT, parent_id);
 
-    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(map, point);
+    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, point);
 
     let points_expected: Point* = alloc();
     let points_expected_len = 1;
@@ -379,7 +379,7 @@ func test_get_neighbours_with_parent_horizontal_left_direction{range_check_ptr, 
 @external
 func test_get_neighbours_with_parent_vertical_up_direction{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let dict_ptr = create_dict(UNDEFINED);
+    let point_attribute = create_dict(UNDEFINED);
 
     tempvar map_grids: felt* = cast(new(X, O, X, O,
                                         O, O, O, O,
@@ -389,9 +389,9 @@ func test_get_neighbours_with_parent_vertical_up_direction{range_check_ptr, pede
 
     let point = Point(1, 1, TRUE);
     let parent_id = convert_coords_to_id(1, 2, 4);
-    set_point_attribute{pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(point, PARENT, parent_id);
+    set_point_attribute{pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(point, PARENT, parent_id);
 
-    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(map, point);
+    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, point);
 
     let points_expected: Point* = alloc();
     let points_expected_len = 1;
@@ -412,7 +412,7 @@ func test_get_neighbours_with_parent_vertical_up_direction{range_check_ptr, pede
 @external
 func test_get_neighbours_with_parent_diagonal_right_down_direction{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let dict_ptr = create_dict(UNDEFINED);
+    let point_attribute = create_dict(UNDEFINED);
 
     tempvar map_grids: felt* = cast(new(X, O, X, O,
                                         O, O, O, O,
@@ -422,9 +422,9 @@ func test_get_neighbours_with_parent_diagonal_right_down_direction{range_check_p
     let point = Point(2, 2, TRUE);
     let parent_id = convert_coords_to_id(1, 1, 4);
     
-    set_point_attribute{pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(point, PARENT, parent_id);
+    set_point_attribute{pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(point, PARENT, parent_id);
 
-    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(map, point);
+    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, point);
 
     let points_expected: Point* = alloc();
     let points_expected_len = 4;
@@ -448,7 +448,7 @@ func test_get_neighbours_with_parent_diagonal_right_down_direction{range_check_p
 @external
 func test_get_neighbours_with_parent_diagonal_left_down_direction_in_border{range_check_ptr, pedersen_ptr: HashBuiltin*}() {
     alloc_locals;
-    let dict_ptr = create_dict(UNDEFINED);
+    let point_attribute = create_dict(UNDEFINED);
 
     tempvar map_grids: felt* = cast(new(X, O, X, O,
                                         O, O, O, O,
@@ -458,9 +458,9 @@ func test_get_neighbours_with_parent_diagonal_left_down_direction_in_border{rang
     let point = Point(0, 2, TRUE);
     let parent_id = convert_coords_to_id(1, 1, 4);
     
-    set_point_attribute{pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(point, PARENT, parent_id);
+    set_point_attribute{pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(point, PARENT, parent_id);
 
-    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(map, point);
+    let (points_len, points) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, point);
 
     let points_expected: Point* = alloc();
     let points_expected_len = 2;

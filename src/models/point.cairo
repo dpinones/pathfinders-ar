@@ -23,10 +23,10 @@ struct Point {
 // @param: point- Point to get attribute.
 // @param: attribute - Attribute name (could be any felt, but we use pre-defined ones from constants.point_attribute).
 // @return: felt - Value mapped to an attribute.
-func get_point_attribute{pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(point: Point, attribute: felt) -> felt {
+func get_point_attribute{pedersen_ptr: HashBuiltin*, point_attribute: DictAccess*}(point: Point, attribute: felt) -> felt {
     let (point_hash) = hash2{hash_ptr=pedersen_ptr}(point.x, point.y);
     let (attribute_hash) = hash2{hash_ptr=pedersen_ptr}(point_hash, attribute);
-    let value = read_entry{dict_ptr=dict_ptr}(attribute_hash);
+    let value = read_entry{dict_ptr=point_attribute}(attribute_hash);
 
     return value;
 }
@@ -37,16 +37,16 @@ func get_point_attribute{pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(poin
 // @param: attribute - Attribute name (could be any felt, but we use pre-defined ones from constants.point_attribute).
 // @param: new_value - Value that we are going to associate to the attribute.
 // @return: felt - Value mapped to an attribute.
-func set_point_attribute{pedersen_ptr: HashBuiltin*, dict_ptr: DictAccess*}(point: Point, attribute: felt, new_value: felt) {
+func set_point_attribute{pedersen_ptr: HashBuiltin*, point_attribute: DictAccess*}(point: Point, attribute: felt, new_value: felt) {
     let (point_hash) = hash2{hash_ptr=pedersen_ptr}(point.x, point.y);
     let (attribute_hash) = hash2{hash_ptr=pedersen_ptr}(point_hash, attribute);
-    let actual_value = read_entry{dict_ptr=dict_ptr}(attribute);
+    let actual_value = read_entry{dict_ptr=point_attribute}(attribute);
 
     if (actual_value == UNDEFINED) {
-        write_entry{dict_ptr=dict_ptr}(attribute_hash, new_value);
+        write_entry{dict_ptr=point_attribute}(attribute_hash, new_value);
         return ();
     } else {
-        update_entry{dict_ptr=dict_ptr}(attribute_hash, actual_value, new_value);
+        update_entry{dict_ptr=point_attribute}(attribute_hash, actual_value, new_value);
         return ();
     }
 }
@@ -148,13 +148,13 @@ func _contains_all_points_equals(points: Point*, points_lenght: felt, other: Poi
 // @param: point - Initial node to get its parents.
 // @param: width - Map width.
 // @return: (felt, Point*) - The list of all nodes linked by parent attribute and length.
-func build_reverse_path_from{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*}(point: Point, width: felt) -> (felt, Point*) {
+func build_reverse_path_from{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*, heap: DictAccess*}(point: Point, width: felt) -> (felt, Point*) {
     let res: Point* = alloc();
     assert res[0] = point;
     return _build_reverse_path_from(point, width, res, 1);
 }
 
-func _build_reverse_path_from{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*}(point: Point, width: felt, result: Point*, result_lenght: felt) -> (felt, Point*) {
+func _build_reverse_path_from{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*, heap: DictAccess*}(point: Point, width: felt, result: Point*, result_lenght: felt) -> (felt, Point*) {
     alloc_locals;
     let parent_id = get_point_attribute(point, PARENT);
     if (parent_id != UNDEFINED) {

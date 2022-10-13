@@ -9,59 +9,64 @@ from starkware.cairo.common.math_cmp import is_le
 
 from src.constants.point_status import OPENED, CLOSED
 from src.constants.point_attribute import STATUS, DISTANCE_TRAVELED, PARENT, DISTANCE_TO_GOAL, ESTIMATED_TOTAL_PATH_DISTANCE, UNDEFINED
-from src.models.heuristic import manhattan
+from src.models.heuristic import manhattan, octile
 from src.models.map import Map, get_point_by_position, get_neighbours, is_walkable_at
 from src.models.point import Point, point_equals, set_point_attribute, get_point_attribute, build_reverse_path_from
 from src.utils.condition import _or, _and, _not, _equals
 from src.utils.dictionary import create_dict
-from src.utils.point_converter import convert_coords_to_id
+from src.utils.min_heap_custom import heap_create, add, poll
+from src.utils.point_converter import convert_coords_to_id, convert_id_to_coords
 
-func find_path{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*}(start_x: felt, start_y: felt, end_x: felt, end_y: felt, map: Map) -> (felt, Point*) {
+func find_path{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*,  heap: DictAccess*}(start_x: felt, start_y: felt, end_x: felt, end_y: felt, map: Map) -> (felt, Point*) {
     alloc_locals;
-    let dict_ptr: DictAccess* = create_dict(UNDEFINED);
-    let open_list: Point* = alloc();
-    let open_list_lenght = 0;
+    let (heap: DictAccess*, heap_len: felt) = heap_create();
+    let point_attribute: DictAccess* = create_dict(UNDEFINED);
 
     let start_is_walkable = is_walkable_at(map, start_x, start_y);
     let end_is_walkable = is_walkable_at(map, end_x, end_y);
     let start_or_end_are_not_walkable = _or(_not(start_is_walkable), _not(end_is_walkable));
     if (start_or_end_are_not_walkable == TRUE) {
-        return (open_list_lenght, open_list);
-    }
-
-    let start_point = Point(start_x, start_y, TRUE);
-    let end_point = Point(end_x, end_y, TRUE);
-    
-    set_point_attribute{dict_ptr=dict_ptr}(start_point, STATUS, OPENED);
-
-    assert open_list[0] = start_point;
-    let open_list_lenght = 1;
-
-    return find_path_internal{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=dict_ptr}(map, open_list, open_list_lenght, end_point);
-}
-
-func find_path_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*}(map: Map, open_list: Point*, open_list_lenght: felt, goal: Point) -> (felt, Point*) {
-    if (open_list_lenght == 0) {
         let empty_list: Point* = alloc();
         return (0, empty_list);
     }
 
-    let node = [open_list];
-    if (node.x == goal.x and node.y == goal.y) {
+    let start_point = Point(start_x, start_y, TRUE);
+    let end_point = Point(end_x, end_y, TRUE);
+    let start_point_id = convert_coords_to_id(start_x, start_y, map.width);
+    let distance_to_goal = octile(abs_value(start_x - end_x), abs_value(start_y - end_y)); 
+    let heap_len = add(heap_len, start_point_id, distance_to_goal);
+
+    set_point_attribute{point_attribute=point_attribute}(start_point, STATUS, OPENED);
+
+    return find_path_internal{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, point_attribute=point_attribute, heap=heap}(map, end_point, heap_len);
+}
+
+func find_path_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*, heap: DictAccess*}(map: Map, goal: Point, heap_len: felt) -> (felt, Point*) {
+    alloc_locals;
+    if (heap_len == 0) {
+        let empty_list: Point* = alloc();
+        return (0, empty_list);
+    }
+
+    let (grid_id, f_value, new_heap_len) = poll(heap_len);
+    let (node_x, node_y) = convert_id_to_coords(grid_id, map.width);
+    let node = Point(node_x, node_y, TRUE);
+
+    if (node_x == goal.x and node_y == goal.y) {
         return build_reverse_path_from(node, map.width);
     }
 
-    identify_successors{open_list=open_list, open_list_lenght=open_list_lenght}(node, goal, map);
-    return find_path_internal(map, open_list + Point.SIZE, open_list_lenght - 1, goal);
+    identify_successors{heap_len = new_heap_len}(node, goal, map);
+    return find_path_internal(map, goal, new_heap_len);
 }
 
-func identify_successors{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*, open_list: Point*, open_list_lenght}(parent: Point, goal: Point, map: Map) {
-    set_point_attribute{pedersen_ptr=pedersen_ptr, dict_ptr=dict_ptr}(parent, STATUS, CLOSED);
+func identify_successors{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*, heap: DictAccess*, heap_len}(parent: Point, goal: Point, map: Map) {
+    set_point_attribute{pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(parent, STATUS, CLOSED);
     let (neighbours_lenght: felt, neighbours: Point*) = get_neighbours(map, parent);
     return identify_successors_internal(neighbours, neighbours_lenght, parent, goal, map);
 }
 
-func identify_successors_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*, open_list: Point*, open_list_lenght}(neighbours: Point*, neighbours_lenght: felt, parent: Point, goal: Point, map: Map) {
+func identify_successors_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*, heap: DictAccess*, heap_len}(neighbours: Point*, neighbours_lenght: felt, parent: Point, goal: Point, map: Map) {
     alloc_locals;
     if (neighbours_lenght == 0) {
         return ();
@@ -75,7 +80,7 @@ func identify_successors_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, d
         if (jump_status == CLOSED) {
             return identify_successors_internal(neighbours + Point.SIZE, neighbours_lenght - 1, parent, goal, map);
         } 
-        let estimated_distance = manhattan(abs_value(jump_point.x - [neighbours].x), abs_value(jump_point.y - [neighbours].y)); 
+        let estimated_distance = octile(abs_value(jump_point.x - [neighbours].x), abs_value(jump_point.y - [neighbours].y)); 
         tempvar g_value = get_point_attribute([neighbours], DISTANCE_TRAVELED);
         tempvar next_g = g_value + estimated_distance;
 
@@ -92,50 +97,59 @@ func identify_successors_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, d
             if (jump_point_attribute_h == UNDEFINED) {
                 let jump_h_value = manhattan(abs_value(jump_point.x - goal.x), abs_value(jump_point.y - goal.y));
                 set_point_attribute(jump_point, DISTANCE_TO_GOAL, jump_h_value);
-                //set_point_attribute(jump_point, ESTIMATED_TOTAL_PATH_DISTANCE, jump_g_value + jump_h_value);
+                set_point_attribute(jump_point, ESTIMATED_TOTAL_PATH_DISTANCE, jump_g_value + jump_h_value);
 
                 tempvar pedersen_ptr = pedersen_ptr;
                 tempvar range_check_ptr = range_check_ptr;
-                tempvar dict_ptr = dict_ptr;
-                tempvar open_list_lenght = open_list_lenght;
+                tempvar point_attribute = point_attribute;
+                tempvar heap = heap;
+                tempvar heap_len = heap_len;
             } else {
-                //set_point_attribute(jump_point, ESTIMATED_TOTAL_PATH_DISTANCE, jump_g_value + jump_point_attribute_h);
+                set_point_attribute(jump_point, ESTIMATED_TOTAL_PATH_DISTANCE, jump_g_value + jump_point_attribute_h);
                 tempvar pedersen_ptr = pedersen_ptr;
                 tempvar range_check_ptr = range_check_ptr;
-                tempvar dict_ptr = dict_ptr;
-                tempvar open_list_lenght = open_list_lenght;
+                tempvar point_attribute = point_attribute;
+                tempvar heap = heap;
+                tempvar heap_len = heap_len;
             }
 
             tempvar pedersen_ptr = pedersen_ptr;
             tempvar range_check_ptr = range_check_ptr;
-            tempvar dict_ptr = dict_ptr;
-            tempvar open_list_lenght = open_list_lenght;
-            
+            tempvar point_attribute = point_attribute;
+            tempvar heap = heap;
+            tempvar heap_len = heap_len;
             if (j_is_not_opened == TRUE) {
-                assert open_list[open_list_lenght] = jump_point;
-                set_point_attribute(jump_point, STATUS, OPENED);
+                let jump_f_value = get_point_attribute(jump_point, ESTIMATED_TOTAL_PATH_DISTANCE);
+                let jump_grid_id = convert_coords_to_id(jump_point.x, jump_point.y, map.width);
+                let new_heap_lengh = add(heap_len, jump_grid_id, jump_f_value);
 
+                // assert open_list[open_list_lenght] = jump_point;
+                set_point_attribute(jump_point, STATUS, OPENED);
                 tempvar pedersen_ptr = pedersen_ptr;
                 tempvar range_check_ptr = range_check_ptr;
-                tempvar dict_ptr = dict_ptr;
-                tempvar open_list_lenght = open_list_lenght + 1;
+                tempvar point_attribute = point_attribute;
+                tempvar heap = heap;
+                tempvar heap_len = new_heap_lengh;
             } else {
                 tempvar pedersen_ptr = pedersen_ptr;
                 tempvar range_check_ptr = range_check_ptr;
-                tempvar dict_ptr = dict_ptr;
-                tempvar open_list_lenght = open_list_lenght;
+                tempvar point_attribute = point_attribute;
+                tempvar heap = heap;
+                tempvar heap_len = heap_len;
             }
         } else {
             tempvar pedersen_ptr = pedersen_ptr;
             tempvar range_check_ptr = range_check_ptr;
-            tempvar dict_ptr = dict_ptr;
-            tempvar open_list_lenght = open_list_lenght;
+            tempvar point_attribute = point_attribute;
+            tempvar heap = heap;
+            tempvar heap_len = heap_len;
         }
     } else {
         tempvar pedersen_ptr = pedersen_ptr;
         tempvar range_check_ptr = range_check_ptr;
-        tempvar dict_ptr = dict_ptr;
-        tempvar open_list_lenght = open_list_lenght;
+        tempvar point_attribute = point_attribute;
+        tempvar heap = heap;
+        tempvar heap_len = heap_len;
     }
     return identify_successors_internal(neighbours + Point.SIZE, neighbours_lenght - 1, parent, goal, map);
 }
@@ -160,7 +174,7 @@ func jump{range_check_ptr, pedersen_ptr: HashBuiltin*}(x: felt, y: felt, px: fel
     }
 
     tempvar dx = x - px;
-    tempvar dy = y - py;
+    tempvar dy = y - py; 
     tempvar is_diagonal_a_move = _and(abs_value(dx), abs_value(dy));
 
     if (is_diagonal_a_move == 1) {
