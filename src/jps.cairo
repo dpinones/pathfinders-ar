@@ -43,13 +43,6 @@ func find_path{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: Dic
 
 func find_path_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*, heap: DictAccess*}(map: Map, goal: Point, heap_len: felt) -> (felt, Point*) {
     alloc_locals;
-    %{
-        from requests import post
-        json = { # creating the body of the post request so it's printed in the python script
-            "find_path_internal": f"new iteration heap_len ({ids.heap_len})"
-        }
-        post(url="http://localhost:5000", json=json) # sending the request to our small "server"
-    %}
     if (heap_len == 0) {
         let empty_list: Point* = alloc();
         return (0, empty_list);
