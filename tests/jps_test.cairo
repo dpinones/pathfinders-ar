@@ -448,3 +448,38 @@ func test_find_path_with_small_map_non_solution{pedersen_ptr: HashBuiltin*, rang
 
     return ();
 }
+
+//   0 1 2 3 4 5  
+// 0 O O O O X O  
+// 1 O S O X G O  
+// 2 O O O X X O  
+// S: Start, G: Goal
+// Map width = 6, height = 3
+@external
+func test_find_path_with_small_rectangular_map{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
+    alloc_locals;
+    let dict_ptr: DictAccess* = create_dict(UNDEFINED);
+    tempvar map_grids: felt* = cast(new(O,X,O,O,O,O,
+                                        O,O,O,X,X,O,
+                                        O,O,X,O,O,O), felt*);
+    let map = Map(map_grids, 6, 3);
+
+    let start_x = 1;
+    let start_y = 2;
+    let end_x = 5;
+    let end_y = 0;
+    let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, dict_ptr=dict_ptr}(start_x, start_y, end_x, end_y, map);
+
+    let expected_result_points: Point* = alloc();
+    let expected_result_points_lenght = 5;
+    assert expected_result_points[0] = Point(1, 2, TRUE);
+    assert expected_result_points[1] = Point(2, 1, TRUE);
+    assert expected_result_points[2] = Point(3, 0, TRUE);
+    assert expected_result_points[3] = Point(4, 0, TRUE);
+    assert expected_result_points[4] = Point(5, 0, TRUE);
+
+    let paths_are_equals = contains_all_points_equals(result_after, result_after_lenght, expected_result_points, expected_result_points_lenght);
+    assert paths_are_equals = TRUE;
+
+    return ();
+}

@@ -14,10 +14,12 @@ from src.models.map import Map, get_point_by_position, get_neighbours, is_walkab
 from src.models.point import Point, point_equals, set_point_attribute, get_point_attribute, build_reverse_path_from
 from src.utils.condition import _or, _and, _not, _equals
 from src.utils.dictionary import create_dict
+from src.utils.min_heap import heap_create
 from src.utils.point_converter import convert_coords_to_id
 
 func find_path{pedersen_ptr: HashBuiltin*, range_check_ptr, dict_ptr: DictAccess*}(start_x: felt, start_y: felt, end_x: felt, end_y: felt, map: Map) -> (felt, Point*) {
     alloc_locals;
+    let heap: DictAccess* = heap_create();
     let dict_ptr: DictAccess* = create_dict(UNDEFINED);
     let open_list: Point* = alloc();
     let open_list_lenght = 0;
@@ -160,7 +162,7 @@ func jump{range_check_ptr, pedersen_ptr: HashBuiltin*}(x: felt, y: felt, px: fel
     }
 
     tempvar dx = x - px;
-    tempvar dy = y - py;
+    tempvar dy = y - py; 
     tempvar is_diagonal_a_move = _and(abs_value(dx), abs_value(dy));
 
     if (is_diagonal_a_move == 1) {
