@@ -5,18 +5,20 @@ from starkware.cairo.common.default_dict import default_dict_new, default_dict_f
 from starkware.cairo.common.dict import dict_write, dict_read, dict_update
 from starkware.cairo.common.dict_access import DictAccess
 
+from src.constants.point_attribute import UNDEFINED
+
 // Credits to: @parketh for the original implementation.
 
 // Returns the value for the specified key in a dictionary.
-func create_dict{range_check_ptr}(initial_value: felt) -> DictAccess* {
+func create_attribute_dict{range_check_ptr}() -> DictAccess* {
     alloc_locals;
     // First create an empty dictionary and finalize it.
     // All keys will be set to value of initial_value.
-    let (local dict) = default_dict_new(default_value=initial_value);
+    let (local dict) = default_dict_new(default_value=UNDEFINED);
 
     // Finalize the dictionary. This ensures default value is correct.
     default_dict_finalize(
-        dict_accesses_start=dict, dict_accesses_end=dict, default_value=initial_value
+        dict_accesses_start=dict, dict_accesses_end=dict, default_value=UNDEFINED
     );
 
     return dict;
