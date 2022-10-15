@@ -2,22 +2,18 @@
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.bool import TRUE, FALSE
 
-from src.models.point import Point, contains_point, contains_point_equals, contains_all_points
-
+from src.models.point import Point, contains_point, contains_all_points
 // Giving a point that exists in the point array,
 // When call contains_point(),
 // Then the method should return TRUE.
 @external
-func test_contains_point_happy_path{}() {
-    let points: Point* = alloc();
-    let points_lenght = 5;
-    assert points[0] = Point(0, 0, TRUE);
-    assert points[1] = Point(0, 1, TRUE);
-    assert points[2] = Point(0, 3, TRUE);
-    assert points[3] = Point(0, 4, TRUE);
-    assert points[4] = Point(0, 5, TRUE);
+func test_contains_point_happy_path{range_check_ptr}() {
+    let points_length = 9;
+    tempvar points: felt* = cast(new(0, 0, 0,
+                                     0, 0, 0,
+                                     0, 0, 0,), felt*);
 
-    let result = contains_point(points, points_lenght, 0, 1);
+    let result = contains_point(points, points_length, 1, 0);
     assert result = TRUE;
 
     return();
@@ -27,16 +23,13 @@ func test_contains_point_happy_path{}() {
 // When call contains_point(),
 // Then the method should return FALSE.
 @external
-func test_contains_point_out_of_array() {
-    let points: Point* = alloc();
-    let points_lenght = 5;
-    assert points[0] = Point(0, 0, TRUE);
-    assert points[1] = Point(0, 1, TRUE);
-    assert points[2] = Point(0, 3, TRUE);
-    assert points[3] = Point(0, 4, TRUE);
-    assert points[4] = Point(0, 5, TRUE);
+func test_contains_point_out_of_array{range_check_ptr}() {
+    let points_length = 9;
+    tempvar points: felt* = cast(new(0, 0, 0,
+                                     0, 0, 0,
+                                     0, 0, 0,), felt*);
 
-    let result = contains_point(points, points_lenght, 3, 3);
+    let result = contains_point(points, points_length, 3, 2);
     assert result = FALSE;
 
     return();
@@ -46,11 +39,11 @@ func test_contains_point_out_of_array() {
 // When call contains_point(),
 // Then the method should return FALSE.
 @external
-func test_contains_point_empty_array() {
-    let points: Point* = alloc();
-    let points_lenght = 0;
+func test_contains_point_empty_array{range_check_ptr}() {
+    let points: felt* = alloc();
+    let points_length = 0;
 
-    let result = contains_point(points, points_lenght, 3, 3);
+    let result = contains_point(points, points_length, 3, 0);
     assert result = FALSE;
 
     return();
@@ -60,24 +53,18 @@ func test_contains_point_empty_array() {
 // When call contains_all_points(),
 // Then the method should return TRUE.
 @external
-func test_contains_all_points_happy_path() {
-    let points: Point* = alloc();
-    let points_lenght = 5;
-    assert points[0] = Point(0, 0, TRUE);
-    assert points[1] = Point(0, 1, TRUE);
-    assert points[2] = Point(0, 3, TRUE);
-    assert points[3] = Point(0, 4, TRUE);
-    assert points[4] = Point(0, 5, TRUE);
+func test_contains_all_points_happy_path{range_check_ptr}() {
+    let points_length = 9;
+    tempvar points: felt* = cast(new(0, 0, 0,
+                                     0, 1, 0,
+                                     0, 0, 1,), felt*);
 
-    let others: Point* = alloc();
-    let others_lenght = 5;
-    assert others[0] = Point(0, 0, TRUE);
-    assert others[1] = Point(0, 1, TRUE);
-    assert others[2] = Point(0, 3, TRUE);
-    assert others[3] = Point(0, 4, TRUE);
-    assert others[4] = Point(0, 5, TRUE);
+    let others_length = 9;
+    tempvar others: felt* = cast(new(0, 0, 0,
+                                     0, 1, 0,
+                                     0, 0, 1,), felt*);
 
-    let result = contains_all_points(points, points_lenght, others, others_lenght);
+    let result = contains_all_points(points, points_length, others, others_length);
     assert result = TRUE;
 
     return();
@@ -87,24 +74,18 @@ func test_contains_all_points_happy_path() {
 // When call contains_all_points(),
 // Then the method should return FALSE.
 @external
-func test_contains_all_points_first_array_distinct() {
-    let points: Point* = alloc();
-    let points_lenght = 5;
-    assert points[0] = Point(0, 0, TRUE);
-    assert points[1] = Point(0, 1, TRUE);
-    assert points[2] = Point(0, 3, TRUE);
-    assert points[3] = Point(0, 4, TRUE);
-    assert points[4] = Point(0, 5, TRUE);
+func test_contains_all_points_first_array_distinct{range_check_ptr}() {
+    let points_length = 9;
+    tempvar points: felt* = cast(new(0, 1, 0,
+                                     0, 0, 0,
+                                     0, 0, 0,), felt*);
 
-    let others: Point* = alloc();
-    let others_lenght = 5;
-    assert others[0] = Point(0, 0, TRUE);
-    assert others[1] = Point(1, 1, TRUE); // different x
-    assert others[2] = Point(0, 3, TRUE);
-    assert others[3] = Point(0, 4, TRUE);
-    assert others[4] = Point(0, 5, TRUE);
+    let others_length = 9;
+    tempvar others: felt* = cast(new(0, 0, 0,
+                                     0, 0, 0,
+                                     0, 0, 0,), felt*);
 
-    let result = contains_all_points(points, points_lenght, others, others_lenght);
+    let result = contains_all_points(points, points_length, others, others_length);
     assert result = FALSE;
 
     return();
@@ -114,24 +95,18 @@ func test_contains_all_points_first_array_distinct() {
 // When call contains_all_points(),
 // Then the method should return FALSE.
 @external
-func test_contains_all_points_second_array_distinct() {
-    let points: Point* = alloc();
-    let points_lenght = 5;
-    assert points[0] = Point(0, 0, TRUE);
-    assert points[1] = Point(1, 1, TRUE); // different x
-    assert points[2] = Point(0, 3, TRUE);
-    assert points[3] = Point(0, 4, TRUE);
-    assert points[4] = Point(0, 5, TRUE);
+func test_contains_all_points_second_array_distinct{range_check_ptr}() {
+    let points_length = 9;
+    tempvar points: felt* = cast(new(0, 0, 0,
+                                     0, 0, 0,
+                                     0, 0, 0,), felt*);
 
-    let others: Point* = alloc();
-    let others_lenght = 5;
-    assert others[0] = Point(0, 0, TRUE);
-    assert others[1] = Point(0, 1, TRUE); 
-    assert others[2] = Point(0, 3, TRUE);
-    assert others[3] = Point(0, 4, TRUE);
-    assert others[4] = Point(0, 5, TRUE);
+    let others_length = 9;
+    tempvar others: felt* = cast(new(0, 1, 0,
+                                     0, 0, 0,
+                                     0, 0, 0,), felt*);
 
-    let result = contains_all_points(points, points_lenght, others, others_lenght);
+    let result = contains_all_points(points, points_length, others, others_length);
     assert result = FALSE;
 
     return();
@@ -141,19 +116,14 @@ func test_contains_all_points_second_array_distinct() {
 // When call contains_all_points(),
 // Then the method should return FALSE.
 @external
-func test_contains_all_points_distinct_len() {
-    let points: Point* = alloc();
-    let points_lenght = 3;
-    assert points[0] = Point(0, 0, TRUE);
-    assert points[1] = Point(1, 1, TRUE);
-    assert points[2] = Point(0, 3, TRUE);
+func test_contains_all_points_distinct_len{range_check_ptr}() {
+    let points_length = 3;
+    tempvar points: felt* = cast(new(0, 0, 0), felt*);
 
-    let others: Point* = alloc();
-    let others_lenght = 2;
-    assert others[0] = Point(0, 0, TRUE);
-    assert others[1] = Point(0, 1, TRUE); 
+    let others_length = 2;
+    tempvar others: felt* = cast(new(0, 0), felt*);
 
-    let result = contains_all_points(points, points_lenght, others, others_lenght);
+    let result = contains_all_points(points, points_length, others, others_length);
     assert result = FALSE;
 
     return();
@@ -163,16 +133,11 @@ func test_contains_all_points_distinct_len() {
 // When call contains_point_equals(),
 // Then the method should return TRUE.
 @external
-func test_contains_point_equals_happy_path() {
-    let points: Point* = alloc();
-    let points_lenght = 5;
-    assert points[0] = Point(0, 0, TRUE);
-    assert points[1] = Point(0, 1, TRUE);
-    assert points[2] = Point(0, 3, TRUE);
-    assert points[3] = Point(0, 4, TRUE);
-    assert points[4] = Point(0, 5, TRUE);
+func test_contains_point_equals_happy_path{range_check_ptr}() {
+    let points_length = 3;
+    tempvar points: felt* = cast(new(0, 1, 0), felt*);
 
-    let result = contains_point_equals(points, points_lenght, 0, 1, TRUE);
+    let result = contains_point(points, points_length, 1, 1);
     assert result = TRUE;
 
     return();
@@ -182,16 +147,11 @@ func test_contains_point_equals_happy_path() {
 // When call contains_point_equals(),
 // Then the method should return FALSE.
 @external
-func test_contains_point_equals_walkable_value_dont_match() {
-    let points: Point* = alloc();
-    let points_lenght = 5;
-    assert points[0] = Point(0, 0, TRUE);
-    assert points[1] = Point(0, 1, TRUE);
-    assert points[2] = Point(0, 3, TRUE);
-    assert points[3] = Point(0, 4, TRUE);
-    assert points[4] = Point(0, 5, TRUE);
+func test_contains_point_equals_walkable_value_dont_match{range_check_ptr}() {
+    let points_length = 5;
+    tempvar points: felt* = cast(new(0, 0, 0, 0, 0), felt*);
 
-    let result = contains_point_equals(points, points_lenght, 0, 1, FALSE);
+    let result = contains_point(points, points_length, 1, 1);
     assert result = FALSE;
 
     return();
@@ -201,13 +161,11 @@ func test_contains_point_equals_walkable_value_dont_match() {
 // When call contains_point_equals(),
 // Then the method should return FALSE.
 @external
-func test_contains_point_equals_out_of_array() {
-    let points: Point* = alloc();
-    let points_lenght = 2;
-    assert points[0] = Point(0, 0, TRUE);
-    assert points[1] = Point(0, 1, TRUE);
+func test_contains_point_equals_out_of_array{range_check_ptr}() {
+    let points_length = 2;
+    tempvar points: felt* = cast(new(0, 0), felt*);
 
-    let result = contains_point_equals(points, points_lenght, 3, 3, TRUE);
+    let result = contains_point(points, points_length, 3, 1);
     assert result = FALSE;
 
     return();
@@ -217,11 +175,11 @@ func test_contains_point_equals_out_of_array() {
 // When call contains_point_equals(),
 // Then the method should return FALSE.
 @external
-func test_contains_point_equals_empty_array() {
-    let points: Point* = alloc();
-    let points_lenght = 0;
+func test_contains_point_equals_empty_array{range_check_ptr}() {
+    let points: felt* = alloc();
+    let points_length = 0;
 
-    let result = contains_point_equals(points, points_lenght, 2, 2, TRUE);
+    let result = contains_point(points, points_length, 4, 1);
     assert result = FALSE;
 
     return();

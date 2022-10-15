@@ -46,8 +46,8 @@ func get_movement_direction{range_check_ptr}(node_grid: felt, parent_grid: felt,
     return get_movement_direction_coords(x, y, px, py);
 }
 
-
 func get_movement_direction_coords{range_check_ptr}(x: felt, y: felt, px: felt, py: felt) -> (dx: felt, dy: felt) {
+    alloc_locals;
     tempvar pre_dx = x - px;
     tempvar abs_value_x_minus_px = abs_value(pre_dx);
     tempvar max_between_x_minus_px_and_one = _max(abs_value_x_minus_px, 1);

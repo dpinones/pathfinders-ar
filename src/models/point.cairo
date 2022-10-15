@@ -16,7 +16,6 @@ from src.utils.point_converter import convert_id_to_coords
 struct Point {
     x: felt,
     y: felt,
-    walkable: felt,
 }
 
 // It allows us to retrieve a value associated with a (x, y) and a given attribute.
@@ -51,143 +50,73 @@ func set_point_attribute{pedersen_ptr: HashBuiltin*, point_attribute: DictAccess
     }
 }
 
-// Check if the (x,y) coordinates are accessible:
-//   (1) The point is inside the map 
-//   (2) The point has the attribute as walkable in TRUE
-//
-// @param: map - Map from which we want to verify.
-// @param: x - X position.
-// @param: y - Y position.
-// @return: Point - Returns TRUE if conditions (1) and (2) are met.
-func is_walkable_at{range_check_ptr}(grids: felt*, grids_len: felt, grid_id: felt) -> felt {
-    let is_in_map = is_in_range(grid_id, 0, grids_len);
-    if (is_in_map == FALSE) {
-        return FALSE;
-    }
-    if (grids[grid_id] == X) {
-        return FALSE;
-    } else {
-        return TRUE;
-    }
-}
-
 // Check if an array of points contains a point with position (x, y).
 //
 // @param: points - The array of points.
-// @param: lenght - The lenght of points.
+// @param: len - The len of points.
 // @param: x - The x position to check if exists in the array.
 // @param: y - The y position to check if exists in the array.
 // @return: felt - 1 if the point exists in the array, 0 otherwise.
-func contains_point(points: felt*, points_lenght: felt, grid_id: felt) -> felt {
-    if (points_lenght == 0) {
+func contains_point{range_check_ptr}(points: felt*, points_len: felt, grid_id: felt, walkable: felt) -> felt {
+    alloc_locals;
+    let grid_is_in_range = is_in_range(grid_id, 0, points_len);
+    if (grid_is_in_range == FALSE) {
         return FALSE;
-    }
-    if ([points] == grid_id) {
-        return TRUE;
-    }
+    } 
 
-    return contains_point(points + 1, points_lenght - 1, grid_id);
+    let has_same_walkable_value = _equals(points[grid_id], walkable);
+    if(has_same_walkable_value == FALSE) {
+        return FALSE;
+    } 
+
+    return TRUE;
 }
 
 // Check if two arrays has the same points.
 //
 // @param: points - The array of points.
-// @param: points_lenght - The lenght of points.
-// @param: other - The array of points to compare.
-// @param: other_lenght - The lenght of other.
+// @param: points_len - The len of points.
+// @param: others - The array of points to compare.
+// @param: other_len - The len of other.
 // @return: felt - 1 if points and other contains all points eachother, 0 otherwise.
-func contains_all_points{range_check_ptr}(points: felt*, points_lenght: felt, other: felt*, other_lenght: felt) -> felt {
-    if (points_lenght != other_lenght) {
+func contains_all_points{range_check_ptr}(points: felt*, points_len: felt, other: felt*, other_len: felt) -> felt {
+    if (points_len != other_len) {
         return FALSE;
     }
-    return _contains_all_points(points, points_lenght, other, other_lenght);
+    return _contains_all_points(points, other, 0, points_len);
 }
 
-func _contains_all_points{range_check_ptr}(points: felt*, points_lenght: felt, other: felt*, other_lenght: felt) -> felt {
-    if (points_lenght == 0) {
+func _contains_all_points{range_check_ptr}(points: felt*, others: felt*, idx: felt, arrays_len: felt) -> felt {
+    if (idx == arrays_len) {
         return TRUE;
     }
-    let founded = contains_point(other, other_lenght, [points]); 
-    if (founded == 0) {
+    let was_found = contains_point(others, arrays_len, idx, points[idx]); 
+    if (was_found == FALSE) {
         return FALSE;
     }
-
-    return _contains_all_points(points + 1, points_lenght - 1, other , other_lenght);
-}
-
-// Check if an array of points contains a point with position (x, y)
-// and if walkable are the same value in that point.
-//
-// @param: points - The array of points.
-// @param: points_lenght - The lenght of points.
-// @param: x - The x position to check if exists in the array.
-// @param: y - The y position to check if exists in the array.
-// @param: walkable - The walkable to check if exists in the array.
-// @return: felt - 1 if points and other contains all points eachother and walkable values are the same, 0 otherwise.
-func contains_point_equals{range_check_ptr}(points: felt*, points_lenght: felt, grid_id: felt, walkable: felt) -> felt {
-    if (points_lenght == 0) {
-        return FALSE;
-    }
-    let point_is_walkable = is_walkable_at(points, points_lenght, [points]);
-    if ([points] == grid_id) {
-        if (point_is_walkable == walkable) {
-            return TRUE;
-        } else {
-            return FALSE;
-        }
-    }
-    return contains_point_equals(points + 1, points_lenght - 1, grid_id, walkable);
-}
-
-// Check if two arrays has the same points and walkables values.
-//
-// @param: points - The array of points.
-// @param: points_lenght - The lenght of points.
-// @param: other - The array of points to compare.
-// @param: other_lenght - The lenght of other.
-// @return: felt - TRUE if points and other contains all points eachother, FALSE otherwise.
-func contains_all_points_equals{range_check_ptr}(points: felt*, points_lenght: felt, other: felt*, other_lenght: felt) -> felt {
-    if (points_lenght != other_lenght) {
-        return FALSE;
-    }
-
-    return _contains_all_points_equals(points, points_lenght, other, other_lenght);
-}
-
-func _contains_all_points_equals{range_check_ptr}(points: felt*, points_lenght: felt, other: felt*, other_lenght: felt) -> felt {
-    if (points_lenght == 0) {
-        return TRUE;
-    }
-
-    let point_is_walkable = is_walkable_at(points, points_lenght, [points]);
-    let founded = contains_point_equals(other, other_lenght, [points], point_is_walkable); 
-    if (founded == 0) {
-        return FALSE;
-    }
-
-    return _contains_all_points_equals(points + 1, points_lenght - 1, other , other_lenght);
+    return _contains_all_points(points, others, idx + 1, arrays_len);
 }
 
 // Returns a list with all the nodes linked by the parent attribute.
 //
 // @param: point - Initial node to get its parents.
 // @param: width - Map width.
-// @return: (felt, Point*) - The list of all nodes linked by parent attribute and length.
+// @return: (felt, Point*) - The list of all nodes linked by parent attribute and len.
 func build_reverse_path_from{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*, heap: DictAccess*}(point: Point, width: felt) -> (felt, Point*) {
     let res: Point* = alloc();
     assert res[0] = point;
     return _build_reverse_path_from(point, width, res, 1);
 }
 
-func _build_reverse_path_from{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*, heap: DictAccess*}(point: Point, width: felt, result: Point*, result_lenght: felt) -> (felt, Point*) {
+func _build_reverse_path_from{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*, heap: DictAccess*}(point: Point, width: felt, result: Point*, result_len: felt) -> (felt, Point*) {
     alloc_locals;
     let parent_id = get_point_attribute(point, PARENT);
     if (parent_id != UNDEFINED) {
         let (x, y) = convert_id_to_coords(parent_id, width);
-        assert result[result_lenght] = Point(x, y, TRUE);
-        return _build_reverse_path_from(Point(x, y, TRUE), width, result, result_lenght + 1);
+        assert result[result_len] = Point(x, y);
+        return _build_reverse_path_from(Point(x, y), width, result, result_len + 1);
     } else {
-        return (result_lenght, result);    
+        return (result_len, result);    
     }
 }
 

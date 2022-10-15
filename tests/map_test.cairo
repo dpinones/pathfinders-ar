@@ -6,10 +6,11 @@ from starkware.cairo.common.dict import DictAccess
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 
 from src.models.map import Map, map_equals, get_neighbours
-from src.models.point import Point, contains_point_equals, contains_all_points, contains_all_points_equals, set_point_attribute
+from src.models.point import Point, set_point_attribute
 from src.constants.point_attribute import UNDEFINED, PARENT
 from src.constants.grid import X, O
 from src.utils.dictionary import create_attribute_dict
+from src.utils.array import contains, contains_all, array_equals
 from src.utils.point_converter import convert_coords_to_id
 from src.utils.map_factory import generate_map_without_obstacles
 
@@ -92,7 +93,7 @@ func test_get_neighbours_center_no_obstacles{range_check_ptr, pedersen_ptr: Hash
                                              3,    5,
                                              6, 7, 8,), felt*);
 
-    let result = contains_all_points_equals(grids, grids_len, grids_expected, grids_expected_len);
+    let result = array_equals(grids, grids_len, grids_expected, grids_expected_len);
     assert result = TRUE;
 
     return();
@@ -114,7 +115,7 @@ func test_get_neighbours_up_left_corner_no_obstacles{range_check_ptr, pedersen_p
                                              3, 4   
                                                     ), felt*);
 
-    let result = contains_all_points_equals(grids, grids_len, grids_expected, grids_expected_len);
+    let result = array_equals(grids, grids_len, grids_expected, grids_expected_len);
     assert result = TRUE;
 
     return();
@@ -136,7 +137,7 @@ func test_get_neighbours_middle_up_no_obstacles{range_check_ptr, pedersen_ptr: H
                                              3, 4, 5
                                                      ), felt*);
 
-    let result = contains_all_points_equals(grids, grids_len, grids_expected, grids_expected_len);
+    let result = array_equals(grids, grids_len, grids_expected, grids_expected_len);
     assert result = TRUE;
 
     return();
@@ -158,7 +159,7 @@ func test_get_neighbours_up_right_corner_no_obstacles{range_check_ptr, pedersen_
                                              4, 5
                                                   ), felt*);
 
-    let result = contains_all_points_equals(grids, grids_len, grids_expected, grids_expected_len);
+    let result = array_equals(grids, grids_len, grids_expected, grids_expected_len);
     assert result = TRUE;
 
     return();
@@ -180,7 +181,7 @@ func test_get_neighbours_down_right_corner_no_obstacles{range_check_ptr, pederse
                                               4, 5,
                                               7   ), felt*);
 
-    let result = contains_all_points_equals(grids, grids_len, grids_expected, grids_expected_len);
+    let result = array_equals(grids, grids_len, grids_expected, grids_expected_len);
     assert result = TRUE;
 
     return();
@@ -202,7 +203,7 @@ func test_get_neighbours_middle_down_no_obstacles{range_check_ptr, pedersen_ptr:
                                              3, 4, 5,
                                              6,    8 ), felt*);
 
-    let result = contains_all_points_equals(grids, grids_len, grids_expected, grids_expected_len);
+    let result = array_equals(grids, grids_len, grids_expected, grids_expected_len);
     assert result = TRUE;
 
     return();
@@ -226,7 +227,7 @@ func test_get_neighbours_down_left_corner_no_obstacles{range_check_ptr, pedersen
     tempvar grids_expected: felt* = cast(new(     
                                              3, 4,  
                                                 7   ), felt*);
-    let result = contains_all_points_equals(grids, grids_len, grids_expected, grids_expected_len);
+    let result = array_equals(grids, grids_len, grids_expected, grids_expected_len);
     assert result = TRUE;
 
     return();
@@ -250,7 +251,7 @@ func test_get_neighbours_middle_blocked_by_obstacles{range_check_ptr, pedersen_p
     let grids_expected_len = 0;
     let (grids_expected: felt*) = alloc();
 
-    let result = contains_all_points_equals(grids, grids_len, grids_expected, grids_expected_len);
+    let result = array_equals(grids, grids_len, grids_expected, grids_expected_len);
     assert result = TRUE;
 
     return();
@@ -273,7 +274,7 @@ func test_get_neighbours_middle_with_one_way{range_check_ptr, pedersen_ptr: Hash
     let (grids_len, grids) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, 1);
     let grids_expected_len = 2;
     tempvar grids_expected: felt* = cast(new(0, 3), felt*);
-    let result = contains_all_points_equals(grids, grids_len, grids_expected, grids_expected_len);
+    let result = array_equals(grids, grids_len, grids_expected, grids_expected_len);
     assert result = TRUE;
 
     return();
@@ -303,7 +304,7 @@ func test_get_neighbours_with_parent_horizontal_right_direction{range_check_ptr,
     let (grids_len, grids) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, 5);
     let grids_expected_len = 1;
     tempvar grids_expected: felt* = cast(new(7), felt*);
-    let result = contains_all_points_equals(grids, grids_len, grids_expected, grids_expected_len);
+    let result = array_equals(grids, grids_len, grids_expected, grids_expected_len);
     assert result = TRUE;
 
     return();
@@ -333,7 +334,7 @@ func test_get_neighbours_with_parent_horizontal_left_direction{range_check_ptr, 
     let (grids_len, grids) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, 5);
     let grids_expected_len = 1;
     tempvar grids_expected: felt* = cast(new(1), felt*);
-    let result = contains_all_points_equals(grids, grids_len, grids_expected, grids_expected_len);
+    let result = array_equals(grids, grids_len, grids_expected, grids_expected_len);
     assert result = TRUE;
 
     return();
@@ -364,7 +365,7 @@ func test_get_neighbours_with_parent_vertical_up_direction{range_check_ptr, pede
     let (grids_len, grids) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, 5);
     let grids_expected_len = 1;
     tempvar grids_expected: felt* = cast(new(1), felt*);
-    let result = contains_all_points_equals(grids, grids_len, grids_expected, grids_expected_len);
+    let result = array_equals(grids, grids_len, grids_expected, grids_expected_len);
     assert result = TRUE;
 
     return();
@@ -392,13 +393,9 @@ func test_get_neighbours_with_parent_diagonal_right_down_direction{range_check_p
 
     let (grids_len, grids) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, 10);
     let grids_expected_len = 4;
-    // assert points_expected[0] = Point(2, 3, TRUE);
-    // assert points_expected[1] = Point(3, 2, TRUE);
-    // assert points_expected[2] = Point(3, 3, TRUE);
-    // assert points_expected[3] = Point(1, 3, TRUE);
     tempvar grids_expected: felt* = cast(new(            12,
                                                  14, 15, 16), felt*);
-    let result = contains_all_points_equals(grids, grids_len, grids_expected, grids_expected_len);
+    let result = array_equals(grids, grids_len, grids_expected, grids_expected_len);
     assert result = TRUE;
 
     return();
@@ -420,7 +417,7 @@ func test_get_neighbours_with_parent_diagonal_left_down_direction_in_border{rang
                                         O, X, O, O,
                                         O, O, O, O),  felt*);
     let map = Map(map_grids, 4, 4);
-    let point = Point(0, 2, TRUE);
+    let point = Point(0, 2);
     let parent_id = convert_coords_to_id(1, 1, 4);
     
     let grid_id = 8;
@@ -431,7 +428,7 @@ func test_get_neighbours_with_parent_diagonal_left_down_direction_in_border{rang
     // assert points_expected[0] = Point(1, 3, TRUE);
     // assert points_expected[1] = Point(0, 3, TRUE);
     tempvar grids_expected: felt* = cast(new(13, 14), felt*);
-    let result = contains_all_points_equals(grids, grids_len, grids_expected, grids_expected_len);
+    let result = array_equals(grids, grids_len, grids_expected, grids_expected_len);
     assert result = TRUE;
 
     return();
