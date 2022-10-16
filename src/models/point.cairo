@@ -102,19 +102,20 @@ func _contains_all_points{range_check_ptr}(points: felt*, others: felt*, idx: fe
 // @param: point - Initial node to get its parents.
 // @param: width - Map width.
 // @return: (felt, Point*) - The list of all nodes linked by parent attribute and len.
-func build_reverse_path_from{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*, heap: DictAccess*}(point: Point, width: felt) -> (felt, Point*) {
+func build_reverse_path_from{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*, heap: DictAccess*}(parent_id: felt, width: felt) -> (felt, Point*) {
     let res: Point* = alloc();
-    assert res[0] = point;
-    return _build_reverse_path_from(point, width, res, 1);
+    let (x, y) = convert_id_to_coords(parent_id, width);
+    assert res[0] = Point(x, y);
+    return _build_reverse_path_from(parent_id, width, res, 1);
 }
 
-func _build_reverse_path_from{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*, heap: DictAccess*}(point: Point, width: felt, result: Point*, result_len: felt) -> (felt, Point*) {
+func _build_reverse_path_from{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*, heap: DictAccess*}(grid_id: felt, width: felt, result: Point*, result_len: felt) -> (felt, Point*) {
     alloc_locals;
-    let parent_id = get_point_attribute(point, PARENT);
+    let parent_id = get_point_attribute(grid_id, PARENT);
     if (parent_id != UNDEFINED) {
         let (x, y) = convert_id_to_coords(parent_id, width);
         assert result[result_len] = Point(x, y);
-        return _build_reverse_path_from(Point(x, y), width, result, result_len + 1);
+        return _build_reverse_path_from(parent_id, width, result, result_len + 1);
     } else {
         return (result_len, result);    
     }
