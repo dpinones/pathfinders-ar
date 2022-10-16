@@ -29,13 +29,6 @@ struct Map {
 // @param: y - Y position.
 // @return: Point - Returns TRUE if conditions (1) and (2) are met.
 func is_walkable_at{range_check_ptr}(map: Map, x: felt, y: felt) -> felt {
-    %{
-        from requests import post
-        json = { # creating the body of the post request so it's printed in the python script
-            "is_walkable_at": f"just check for ({ids.x}, {ids.y})"
-        }
-        post(url="http://localhost:5000", json=json) # sending the request to our small "server"
-    %}
     let is_in_map = is_inside_of_map(map, x, y);
     if (is_in_map == FALSE) {
         return FALSE;
@@ -75,7 +68,7 @@ func get_neighbours{range_check_ptr, pedersen_ptr: HashBuiltin*, point_attribute
     alloc_locals;
     let (x, y) = convert_id_to_coords(grid_id, map.width);
     let parent_id = get_point_attribute{pedersen_ptr = pedersen_ptr, point_attribute = point_attribute}(grid_id, PARENT);
-
+    
     if (parent_id == UNDEFINED) {
         return _get_neighbours(map, x, y);
     } else {
@@ -91,38 +84,43 @@ func _prune_neighbours{range_check_ptr, pedersen_ptr: HashBuiltin*, point_attrib
 
     let (dx, dy) = get_movement_direction_coords(x, y, px, py);
     tempvar is_diagonal_a_move = _and(abs_value(dx), abs_value(dy));
-
+    
     if (is_diagonal_a_move == TRUE) {
         let (_, relevant_neighbours_len) = check_and_add_point(map, x, y + dy, x, y + dy, TRUE, relevant_neighbours_len, relevant_neighbours);
         let (_, relevant_neighbours_len) = check_and_add_point(map, x + dx, y, x + dx, y, TRUE, relevant_neighbours_len, relevant_neighbours);
         let (relevant_neighbours_len) = check_and_add_point_double_or_condition(map, x, y + dy, x + dx, y, x + dx, y + dy, relevant_neighbours_len, relevant_neighbours);
         let (relevant_neighbours_len) = check_and_add_point_double_and_condition(map, x - dx, y, x, y + dy, x - dx, y + dy, relevant_neighbours_len, relevant_neighbours);
         let (relevant_neighbours_len) = check_and_add_point_double_and_condition(map, x, y - dy, x + dx, y, x + dx, y - dy, relevant_neighbours_len, relevant_neighbours);
-        
-        return (relevant_neighbours_len, relevant_neighbours);
-    }     
-    if (dx == 0) {
-        let is_walkable_at_grid = is_walkable_at(map, x, y + dy);
-        if (is_walkable_at_grid == TRUE) {
-            let (_, relevant_neighbours_len) = check_and_add_point(map, x, y + dy, x, y + dy, TRUE, relevant_neighbours_len, relevant_neighbours);
-            let (_, relevant_neighbours_len) = check_and_add_point(map, x + 1, y, x + 1, y + dy, FALSE, relevant_neighbours_len, relevant_neighbours);
-            let (_, relevant_neighbours_len) = check_and_add_point(map, x - 1, y, x - 1, y + dy, FALSE, relevant_neighbours_len, relevant_neighbours);
 
-            return (relevant_neighbours_len, relevant_neighbours);
-        } else {
-            tempvar range_check_ptr = range_check_ptr; 
-        }
+        tempvar relevant_neighbours_len = relevant_neighbours_len; 
+        tempvar range_check_ptr = range_check_ptr; 
     } else {
-        let is_walkable_at_grid = is_walkable_at(map, x + dx, y);
-        if (is_walkable_at_grid == TRUE) {
-            let (_, relevant_neighbours_len) = check_and_add_point(map, x + dx, y, x + dx, y, TRUE, relevant_neighbours_len, relevant_neighbours);
-            let (_, relevant_neighbours_len) = check_and_add_point(map, x, y + 1, x + dx, y + 1, FALSE, relevant_neighbours_len, relevant_neighbours);
-            let (_, relevant_neighbours_len) = check_and_add_point(map, x, y - 1, x + dx, y - 1, FALSE, relevant_neighbours_len, relevant_neighbours);
-
-            return (relevant_neighbours_len, relevant_neighbours);
+        if (dx == 0) {
+            let is_walkable_at_grid = is_walkable_at(map, x, y + dy);
+            if (is_walkable_at_grid == TRUE) {
+                let (_, relevant_neighbours_len) = check_and_add_point(map, x, y + dy, x, y + dy, TRUE, relevant_neighbours_len, relevant_neighbours);
+                let (_, relevant_neighbours_len) = check_and_add_point(map, x + 1, y, x + 1, y + dy, FALSE, relevant_neighbours_len, relevant_neighbours);
+                let (_, relevant_neighbours_len) = check_and_add_point(map, x - 1, y, x - 1, y + dy, FALSE, relevant_neighbours_len, relevant_neighbours);
+                
+                tempvar relevant_neighbours_len = relevant_neighbours_len; 
+                tempvar range_check_ptr = range_check_ptr; 
+            } else {
+                tempvar relevant_neighbours_len = relevant_neighbours_len; 
+                tempvar range_check_ptr = range_check_ptr; 
+            }
         } else {
-            tempvar range_check_ptr = range_check_ptr; 
-        }
+            let is_walkable_at_grid = is_walkable_at(map, x + dx, y);
+            if (is_walkable_at_grid == TRUE) {
+                let (_, relevant_neighbours_len) = check_and_add_point(map, x + dx, y, x + dx, y, TRUE, relevant_neighbours_len, relevant_neighbours);
+                let (_, relevant_neighbours_len) = check_and_add_point(map, x, y + 1, x + dx, y + 1, FALSE, relevant_neighbours_len, relevant_neighbours);
+                let (_, relevant_neighbours_len) = check_and_add_point(map, x, y - 1, x + dx, y - 1, FALSE, relevant_neighbours_len, relevant_neighbours);
+
+                return (relevant_neighbours_len, relevant_neighbours);
+            } else {
+                tempvar relevant_neighbours_len = relevant_neighbours_len; 
+                tempvar range_check_ptr = range_check_ptr; 
+            }
+        }   
     }
     return (relevant_neighbours_len, relevant_neighbours);
 }
@@ -179,15 +177,14 @@ func _map_equals(grids: felt*, other_grids: felt*, index: felt, map_lenght: felt
     if (map_lenght == 0) {
         return TRUE;
     }
-
     if ([grids] != [other_grids]) {
         return FALSE;
     } 
 
     return _map_equals(grids, other_grids, index + 1, map_lenght - 1);
 }
-// Aux methods
 
+// Aux methods
 func check_diagonal_and_check_same_as_add{range_check_ptr}(map: Map, diagonal_condition: felt, walkable_condition: felt, x: felt, y: felt, relevant_neighbours_len: felt, relevant_neighbours: felt*) -> (felt, felt) {
     let is_walkable = is_walkable_at(map, x, y);
     
@@ -196,13 +193,6 @@ func check_diagonal_and_check_same_as_add{range_check_ptr}(map: Map, diagonal_co
     }
     if (is_walkable == walkable_condition) {
         let candidate_grid_id = convert_coords_to_id(x, y, map.width);
-        %{
-            from requests import post
-            json = { # creating the body of the post request so it's printed in the python script
-                "check_diagonal_and_check_same_as_add": f"just added{ids.candidate_grid_id}"
-            }
-            post(url="http://localhost:5000", json=json) # sending the request to our small "server"
-        %}
         assert relevant_neighbours[relevant_neighbours_len] = candidate_grid_id;
         return (is_walkable, relevant_neighbours_len + 1);
     } else {

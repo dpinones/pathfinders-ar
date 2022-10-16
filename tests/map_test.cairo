@@ -303,7 +303,7 @@ func test_get_neighbours_with_parent_horizontal_right_direction{range_check_ptr,
 
     let (grids_len, grids) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, 5);
     let grids_expected_len = 1;
-    tempvar grids_expected: felt* = cast(new(7), felt*);
+    tempvar grids_expected: felt* = cast(new(6), felt*);
     let result = array_equals(grids, grids_len, grids_expected, grids_expected_len);
     assert result = TRUE;
 
@@ -331,9 +331,9 @@ func test_get_neighbours_with_parent_horizontal_left_direction{range_check_ptr, 
     let grid_id = 5;
     set_point_attribute{pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(grid_id, PARENT, parent_id);
 
-    let (grids_len, grids) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, 5);
+    let (grids_len, grids) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, grid_id);
     let grids_expected_len = 1;
-    tempvar grids_expected: felt* = cast(new(1), felt*);
+    tempvar grids_expected: felt* = cast(new(4), felt*);
     let result = array_equals(grids, grids_len, grids_expected, grids_expected_len);
     assert result = TRUE;
 
@@ -391,10 +391,10 @@ func test_get_neighbours_with_parent_diagonal_right_down_direction{range_check_p
     let grid_id = 10;
     set_point_attribute{pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(grid_id, PARENT, parent_id);
 
-    let (grids_len, grids) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, 10);
+    let (grids_len, grids) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, grid_id);
     let grids_expected_len = 4;
-    tempvar grids_expected: felt* = cast(new(            12,
-                                                 14, 15, 16), felt*);
+    tempvar grids_expected: felt* = cast(new(            11,
+                                                 13, 14, 15), felt*);
     let result = array_equals(grids, grids_len, grids_expected, grids_expected_len);
     assert result = TRUE;
 
@@ -417,17 +417,14 @@ func test_get_neighbours_with_parent_diagonal_left_down_direction_in_border{rang
                                         O, X, O, O,
                                         O, O, O, O),  felt*);
     let map = Map(map_grids, 4, 4);
-    let point = Point(0, 2);
     let parent_id = convert_coords_to_id(1, 1, 4);
     
     let grid_id = 8;
     set_point_attribute{pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(grid_id, PARENT, parent_id);
 
-    let (grids_len, grids) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, 8);
+    let (grids_len, grids) = get_neighbours{range_check_ptr=range_check_ptr, pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(map, grid_id);
     let grids_expected_len = 2;
-    // assert points_expected[0] = Point(1, 3, TRUE);
-    // assert points_expected[1] = Point(0, 3, TRUE);
-    tempvar grids_expected: felt* = cast(new(13, 14), felt*);
+    tempvar grids_expected: felt* = cast(new(12, 13), felt*);
     let result = array_equals(grids, grids_len, grids_expected, grids_expected_len);
     assert result = TRUE;
 
