@@ -105,7 +105,7 @@ func _contains_all_points{range_check_ptr}(points: felt*, others: felt*, idx: fe
 func build_reverse_path_from{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*, heap: DictAccess*}(parent_id: felt, width: felt) -> (felt, Point*) {
     let res: Point* = alloc();
     let (x, y) = convert_id_to_coords(parent_id, width);
-    assert res[0] = Point(x, y);
+    assert res[0] = Point(x, y);        
     return _build_reverse_path_from(parent_id, width, res, 1);
 }
 
@@ -133,4 +133,49 @@ func point_equals(point: Point, other: Point) -> felt {
     tempvar points_are_equals = _and(x_equal, _and(y_equal, walkable_equal));
 
     return points_are_equals;
+}
+
+// Check if two arrays has the same points.
+//
+// @param: points - The array of points.
+// @param: points_lenght - The lenght of points.
+// @param: other - The array of points to compare.
+// @param: other_lenght - The lenght of other.
+// @return: felt - 1 if points and other contains all points eachother, 0 otherwise.
+func contains_all_points_path(points: Point*, points_lenght: felt, other: Point*, other_lenght: felt) -> felt {
+    if (points_lenght != other_lenght) {
+        return FALSE;
+    }
+
+    return _contains_all_points_path(points, points_lenght, other, other_lenght);
+}
+
+func _contains_all_points_path(points: Point*, points_lenght: felt, other: Point*, other_lenght: felt) -> felt {
+    if (points_lenght == 0) {
+        return TRUE;
+    }
+    let founded = contains_point_path(other, other_lenght, [points].x, [points].y); 
+    if (founded == 0) {
+        return FALSE;
+    }
+
+    return _contains_all_points_path(points + Point.SIZE, points_lenght - 1, other , other_lenght);
+}
+
+// Check if an array of points contains a point with position (x, y).
+//
+// @param: points - The array of points.
+// @param: lenght - The lenght of points.
+// @param: x - The x position to check if exists in the array.
+// @param: y - The y position to check if exists in the array.
+// @return: felt - 1 if the point exists in the array, 0 otherwise.
+func contains_point_path(points: Point*, points_lenght: felt, x: felt, y: felt) -> felt {
+    if (points_lenght == 0) {
+        return FALSE;
+    }
+    if ([points].x == x and [points].y == y) {
+        return TRUE;
+    }
+
+    return contains_point_path(points + Point.SIZE, points_lenght - 1, x, y);
 }

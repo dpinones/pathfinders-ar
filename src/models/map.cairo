@@ -101,7 +101,7 @@ func _prune_neighbours{range_check_ptr, pedersen_ptr: HashBuiltin*, point_attrib
                 let (_, relevant_neighbours_len) = check_and_add_point(map, x, y + dy, x, y + dy, TRUE, relevant_neighbours_len, relevant_neighbours);
                 let (_, relevant_neighbours_len) = check_and_add_point(map, x + 1, y, x + 1, y + dy, FALSE, relevant_neighbours_len, relevant_neighbours);
                 let (_, relevant_neighbours_len) = check_and_add_point(map, x - 1, y, x - 1, y + dy, FALSE, relevant_neighbours_len, relevant_neighbours);
-                
+
                 tempvar relevant_neighbours_len = relevant_neighbours_len; 
                 tempvar range_check_ptr = range_check_ptr; 
             } else {
@@ -201,11 +201,17 @@ func check_diagonal_and_check_same_as_add{range_check_ptr}(map: Map, diagonal_co
 }
 
 func check_and_add_point{range_check_ptr}(map: Map, x: felt, y: felt, relevant_x: felt, relevant_y: felt, walkable_condition: felt, relevant_neighbours_len: felt, relevant_neighbours: felt*) -> (felt, felt) {
+    alloc_locals;
     let is_walkable = is_walkable_at(map, x, y);
     if (is_walkable == walkable_condition) {
-        let candidate_grid_id = convert_coords_to_id(relevant_x, relevant_y, map.width);
-        assert relevant_neighbours[relevant_neighbours_len] = candidate_grid_id;
-        return (is_walkable, relevant_neighbours_len + 1,);
+        let candidate_is_walkable = is_walkable_at(map, relevant_x, relevant_y);
+        if (candidate_is_walkable == FALSE) {
+            return (is_walkable, relevant_neighbours_len,);
+        } else {
+            let candidate_grid_id = convert_coords_to_id(relevant_x, relevant_y, map.width);
+            assert relevant_neighbours[relevant_neighbours_len] = candidate_grid_id;
+            return (is_walkable, relevant_neighbours_len + 1,);
+        }
     } else {
         return (is_walkable, relevant_neighbours_len,);
     }

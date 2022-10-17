@@ -5,7 +5,7 @@ from starkware.cairo.common.bool import FALSE, TRUE
 
 from src.constants.grid import X, O
 from src.models.point import Point, contains_point
-from src.models.map import Map, get_point_by_position, map_equals, is_inside_of_map
+from src.models.map import Map, map_equals, is_inside_of_map, is_walkable_at
 from src.utils.map_factory import generate_map, generate_map_without_obstacles
 
 // Giving width = 3, height = 3,
@@ -75,32 +75,32 @@ func test_generate_map_with_obstacles_happy_path{range_check_ptr}() {
 
     let map = Map(map_grids, 3, 3);
 
-    let grid = get_point_by_position(map, 0, 0);
-    assert grid.walkable = TRUE;
+    let is_walkable = is_walkable_at(map, 0, 0);
+    assert is_walkable = TRUE;
 
-    let grid = get_point_by_position(map, 1, 0);
-    assert grid.walkable = FALSE;
+    let is_walkable = is_walkable_at(map, 1, 0);
+    assert is_walkable = FALSE;
 
-    let grid = get_point_by_position(map, 2, 0);
-    assert grid.walkable = TRUE;
+    let is_walkable = is_walkable_at(map, 2, 0);
+    assert is_walkable = TRUE;
 
-    let grid = get_point_by_position(map, 0, 1);
-    assert grid.walkable = FALSE;
+    let is_walkable = is_walkable_at(map, 0, 1);
+    assert is_walkable = FALSE;
 
-    let grid = get_point_by_position(map, 1, 1);
-    assert grid.walkable = TRUE;
+    let is_walkable = is_walkable_at(map, 1, 1);
+    assert is_walkable = TRUE;
     
-    let grid = get_point_by_position(map, 2, 1);
-    assert grid.walkable = TRUE;
+    let is_walkable = is_walkable_at(map, 2, 1);
+    assert is_walkable = TRUE;
 
-    let grid = get_point_by_position(map, 0, 2);
-    assert grid.walkable = FALSE;
+    let is_walkable = is_walkable_at(map, 0, 2);
+    assert is_walkable = FALSE;
 
-    let grid = get_point_by_position(map, 1, 2);
-    assert grid.walkable = TRUE;
+    let is_walkable = is_walkable_at(map, 1, 2);
+    assert is_walkable = TRUE;
 
-    let grid = get_point_by_position(map, 2, 2);
-    assert grid.walkable = FALSE;
+    let is_walkable = is_walkable_at(map, 2, 2);
+    assert is_walkable = FALSE;
 
     return(); 
 }

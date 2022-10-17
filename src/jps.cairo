@@ -18,13 +18,13 @@ from src.utils.dictionary import create_attribute_dict
 from src.utils.min_heap_custom import heap_create, add, poll
 from src.utils.point_converter import convert_coords_to_id, convert_id_to_coords
 
-func find_path{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*,  heap: DictAccess*}(start_x: felt, start_y: felt, end_x: felt, end_y: felt, map: Map) -> (felt, Point*) {
+func find_path{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*,  heap: DictAccess*}(start_x: felt, start_y: felt, goal_x: felt, goal_y: felt, map: Map) -> (felt, Point*) {
     alloc_locals;
     let (heap: DictAccess*, heap_len: felt) = heap_create();
     let point_attribute: DictAccess* = create_attribute_dict();
 
     let start_is_walkable = is_walkable_at(map, start_x, start_y);
-    let end_is_walkable = is_walkable_at(map, end_x, end_y);
+    let end_is_walkable = is_walkable_at(map, goal_x, goal_y);
     let start_or_end_are_not_walkable = _or(_not(start_is_walkable), _not(end_is_walkable));
     if (start_or_end_are_not_walkable == TRUE) {
         let empty_list: Point* = alloc();
@@ -33,45 +33,43 @@ func find_path{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: Dic
 
     // let start_point = Point(start_x, start_y);
     // let end_point = Point(end_x, end_y);
-    let start_point_id = convert_coords_to_id(start_x, start_y, map.width);
-    let distance_to_goal = octile(abs_value(start_x - end_x), abs_value(start_y - end_y)); 
-    let heap_len = add(heap_len, start_point_id, distance_to_goal);
+    let start_id = convert_coords_to_id(start_x, start_y, map.width);
+    let distance_to_goal = octile(abs_value(start_x - goal_x), abs_value(start_y - goal_y)); 
+    set_point_attribute{point_attribute=point_attribute}(start_id, STATUS, OPENED);
+    let heap_len = add(heap_len, start_id, distance_to_goal);
 
-    set_point_attribute{point_attribute=point_attribute}(start_point, STATUS, OPENED);
-
-    return find_path_internal{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, point_attribute=point_attribute, heap=heap}(map, end_point, heap_len);
+    return _find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, point_attribute=point_attribute, heap=heap}(map, goal_x, goal_y, heap_len);
 }
 
-func find_path_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*, heap: DictAccess*}(map: Map, goal: Point, heap_len: felt) -> (felt, Point*) {
+func _find_path{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*, heap: DictAccess*}(map: Map, goal_x: felt, goal_y: felt, heap_len: felt) -> (felt, Point*) {
     alloc_locals;
     if (heap_len == 0) {
         let empty_list: Point* = alloc();
         return (0, empty_list);
     }
 
-    let (grid_id, f_value, new_heap_len) = poll(heap_len);
-    let (node_x, node_y) = convert_id_to_coords(grid_id, map.width);
-    let node = Point(node_x, node_y, TRUE);
-
-    if (node_x == goal.x and node_y == goal.y) {
-        return build_reverse_path_from(node, map.width);
+    let (node_id, _, new_heap_len) = poll(heap_len);
+    let (node_x, node_y) = convert_id_to_coords(node_id, map.width);
+    if (node_x == goal_x and node_y == goal_y) {
+        return build_reverse_path_from(node_id, map.width);
     }
 
-    identify_successors{heap_len = new_heap_len}(node, goal, map);
-    return find_path_internal(map, goal, new_heap_len);
+    identify_successors{heap_len = new_heap_len}(node_id, node_x, node_y, goal_x, goal_y, map);
+    return _find_path(map, goal_x, goal_y, new_heap_len);
 }
 
-func identify_successors{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*, heap: DictAccess*, heap_len}(parent: Point, goal: Point, map: Map) {
-    set_point_attribute{pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(parent, STATUS, CLOSED);
-    let (neighbours_lenght: felt, neighbours: Point*) = get_neighbours(map, parent);
-    return identify_successors_internal(neighbours, neighbours_lenght, parent, goal, map);
+func identify_successors{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*, heap: DictAccess*, heap_len}(node_id: felt, node_x: felt, node_y: felt, goal_x: felt, goal_y: felt, map: Map) {
+    set_point_attribute{pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(node_id, STATUS, CLOSED);
+    let (neighbours_lenght: felt, neighbours: felt*) = get_neighbours(map, node_id);
+    return _identify_successors(neighbours, neighbours_lenght, node_x, node_y, goal_x, goal_y, map);
 }
 
-func identify_successors_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*, heap: DictAccess*, heap_len}(neighbours: Point*, neighbours_lenght: felt, parent_x: felt, parent_y: felt, goal_x: felt, goal_y: felt, map: Map) {
+func _identify_successors{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*, heap: DictAccess*, heap_len}(neighbours: felt*, neighbours_lenght: felt, parent_x: felt, parent_y: felt, goal_x: felt, goal_y: felt, map: Map) {
     alloc_locals;
     if (neighbours_lenght == 0) {
         return ();
     }
+    let val = [neighbours];
     let (x, y) = convert_id_to_coords([neighbours], map.width);
     let jump_point = jump(x, y, parent_x, parent_y, goal_x, goal_y, map);
 
@@ -80,7 +78,7 @@ func identify_successors_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, p
         let (jx, jy) = convert_id_to_coords(jump_point, map.width);
         
         if (jump_status == CLOSED) {
-            return identify_successors_internal(neighbours + Point.SIZE, neighbours_lenght - 1, parent_x, parent_y, goal_x, goal_y, map);
+            return _identify_successors(neighbours + Point.SIZE, neighbours_lenght - 1, parent_x, parent_y, goal_x, goal_y, map);
         } 
         let estimated_distance = octile(abs_value(jx - x), abs_value(jy - y)); 
         tempvar g_value = get_point_attribute([neighbours], DISTANCE_TRAVELED);
@@ -122,25 +120,24 @@ func identify_successors_internal{pedersen_ptr: HashBuiltin*, range_check_ptr, p
             tempvar heap_len = heap_len;
             if (j_is_not_opened == TRUE) {
                 let jump_f_value = get_point_attribute(jump_point, ESTIMATED_TOTAL_PATH_DISTANCE);
-                let jump_grid_id = convert_coords_to_id(jump_point.x, jump_point.y, map.width);
-                let new_heap_lengh = add(heap_len, jump_grid_id, jump_f_value);
+                let new_heap_lengh = add(heap_len, jump_point, jump_f_value);
                 set_point_attribute(jump_point, STATUS, OPENED);
                 
-                return identify_successors_internal(neighbours + Point.SIZE, neighbours_lenght - 1, parent_x, parent_y, goal_x, goal_y, map);
-            } else {
                 tempvar pedersen_ptr = pedersen_ptr;
                 tempvar range_check_ptr = range_check_ptr;
                 tempvar point_attribute = point_attribute;
                 tempvar heap = heap;
-                tempvar heap_len = heap_len;
+                tempvar heap_len = heap_len + 1;
+            } else {
+                return _identify_successors(neighbours + 1, neighbours_lenght - 1, parent_x, parent_y, goal_x, goal_y, map);
             }
         } else {
-            return identify_successors_internal(neighbours + Point.SIZE, neighbours_lenght - 1, parent_x, parent_y, goal_x, goal_y, map);
+            return _identify_successors(neighbours + 1, neighbours_lenght - 1, parent_x, parent_y, goal_x, goal_y, map);
         }
     } else {
-        return identify_successors_internal(neighbours + Point.SIZE, neighbours_lenght - 1, parent_x, parent_y, goal_x, goal_y, map);
+        return _identify_successors(neighbours + 1, neighbours_lenght - 1, parent_x, parent_y, goal_x, goal_y, map);
     }
-    return identify_successors_internal(neighbours + Point.SIZE, neighbours_lenght - 1, parent_x, parent_y, goal_x, goal_y, map);
+    return _identify_successors(neighbours + 1, neighbours_lenght - 1, parent_x, parent_y, goal_x, goal_y, map);
 }
 
 // Definition 2. Node y is the jump point from node x, heading in direction ~d, if y minimizes the value k such that y = x+k~d
@@ -181,15 +178,15 @@ func jump{range_check_ptr, pedersen_ptr: HashBuiltin*}(x: felt, y: felt, px: fel
         }
 
         // We check if horizontal jump point obtained has not an invalid position in X (could be x, y or walkable value)
-        let horizontal_recursion_point = jump(x + dx, y, x, y, goal_x, goal_y, map);
-        if(horizontal_recursion_point.x != -1) {
+        let horizontal_recursion_grid = jump(x + dx, y, x, y, goal_x, goal_y, map);
+        if(horizontal_recursion_grid != UNDEFINED) {
             let grid_id = convert_coords_to_id(x, y, map.width);
             return grid_id;
         }
 
         // We check if vertical jump point obtained has not an invalid position in X (could be x, y or walkable value)
-        let vertical_recursion_point = jump(x, y + dy, x, y, goal_x, goal_y, map);
-        if(vertical_recursion_point.x != -1) {
+        let vertical_recursion_grid = jump(x, y + dy, x, y, goal_x, goal_y, map);
+        if(vertical_recursion_grid != UNDEFINED) {
             let grid_id = convert_coords_to_id(x, y, map.width);
             return grid_id;
         } 
