@@ -32,7 +32,7 @@ func heap_create{range_check_ptr}() -> (heap : DictAccess*, heap_len : felt) {
 // @param val : New value to insert into heap
 // @return new_len : New length of heap
 func add{range_check_ptr, pedersen_ptr: HashBuiltin*, heap: DictAccess*}(heap_len: felt, grid_id: felt, val: felt) -> felt {
-    alloc_locals;        
+    alloc_locals;    
     dict_write{dict_ptr=heap}(key=heap_len, new_value=grid_id);
     let (attribute_hash) = hash2{hash_ptr=pedersen_ptr}(grid_id, G_VALUE);
     dict_write{dict_ptr=heap}(key=attribute_hash, new_value=val);
@@ -68,7 +68,7 @@ func poll{range_check_ptr, pedersen_ptr: HashBuiltin*, heap : DictAccess*}(heap_
         tempvar range_check_ptr=range_check_ptr;
         tempvar heap=heap;
         tempvar pedersen_ptr=pedersen_ptr;
-    }
+    } 
     return (start_grid_id, start_g_value, heap_len-1);
 }
 

@@ -203,15 +203,15 @@ func check_diagonal_and_check_same_as_add{range_check_ptr}(map: Map, diagonal_co
 func check_and_add_point{range_check_ptr}(map: Map, x: felt, y: felt, relevant_x: felt, relevant_y: felt, walkable_condition: felt, relevant_neighbours_len: felt, relevant_neighbours: felt*) -> (felt, felt) {
     alloc_locals;
     let is_walkable = is_walkable_at(map, x, y);
+    let candidate_is_walkable = is_walkable_at(map, relevant_x, relevant_y);
+    if (candidate_is_walkable == FALSE) {
+        return (is_walkable, relevant_neighbours_len,);
+    }
+
     if (is_walkable == walkable_condition) {
-        let candidate_is_walkable = is_walkable_at(map, relevant_x, relevant_y);
-        if (candidate_is_walkable == FALSE) {
-            return (is_walkable, relevant_neighbours_len,);
-        } else {
-            let candidate_grid_id = convert_coords_to_id(relevant_x, relevant_y, map.width);
-            assert relevant_neighbours[relevant_neighbours_len] = candidate_grid_id;
-            return (is_walkable, relevant_neighbours_len + 1,);
-        }
+        let candidate_grid_id = convert_coords_to_id(relevant_x, relevant_y, map.width);
+        assert relevant_neighbours[relevant_neighbours_len] = candidate_grid_id;
+        return (is_walkable, relevant_neighbours_len + 1,);
     } else {
         return (is_walkable, relevant_neighbours_len,);
     }
@@ -219,6 +219,11 @@ func check_and_add_point{range_check_ptr}(map: Map, x: felt, y: felt, relevant_x
 
 func check_and_add_point_double_and_condition{range_check_ptr}(map: Map, first_x: felt, first_y: felt, second_x: felt, second_y: felt, relevant_x: felt, relevant_y: felt, relevant_neighbours_len: felt, relevant_neighbours: felt*) -> (felt){
     alloc_locals;
+    let candidate_is_walkable = is_walkable_at(map, relevant_x, relevant_y);
+    if (candidate_is_walkable == FALSE) {
+        return (relevant_neighbours_len,);
+    }
+
     let is_walkable_first = is_walkable_at(map, first_x, first_y);
     let is_walkable_second = is_walkable_at(map, second_x, second_y);
     let meet_conditions = _and(_not(is_walkable_first), is_walkable_second);
@@ -234,14 +239,14 @@ func check_and_add_point_double_and_condition{range_check_ptr}(map: Map, first_x
 
 func check_and_add_point_double_or_condition{range_check_ptr}(map: Map, first_x: felt, first_y: felt, second_x: felt, second_y: felt, relevant_x: felt, relevant_y: felt, relevant_neighbours_len: felt, relevant_neighbours: felt*) -> (felt){
     alloc_locals;
-    let is_walkable_first = is_walkable_at(map, first_x, first_y);
-    let is_walkable_second = is_walkable_at(map, second_x, second_y);
-    let meet_conditions = _or(is_walkable_first, is_walkable_second);
-    
     let candidate_is_walkable = is_walkable_at(map, relevant_x, relevant_y);
     if (candidate_is_walkable == FALSE) {
         return (relevant_neighbours_len,);
     }
+
+    let is_walkable_first = is_walkable_at(map, first_x, first_y);
+    let is_walkable_second = is_walkable_at(map, second_x, second_y);
+    let meet_conditions = _or(is_walkable_first, is_walkable_second);
 
     if (meet_conditions == TRUE) {
         let candidate_grid_id = convert_coords_to_id(relevant_x, relevant_y, map.width);

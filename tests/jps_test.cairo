@@ -587,3 +587,48 @@ func test_find_path_with_small_rectangular_map{pedersen_ptr: HashBuiltin*, range
 //     let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, point_attribute=point_attribute, heap=heap}(start_x, start_y, end_x, end_y, map);
 //     return ();
 // }
+
+// @external
+// func test_find_path_with_biggest_map{pedersen_ptr: HashBuiltin*, range_check_ptr}() {
+//     alloc_locals;
+//     let point_attribute: DictAccess* = create_attribute_dict();
+//     let heap: DictAccess* = heap_create();
+//     tempvar map_grids: felt* = cast(new(X,X,O,X,X,O,X,X,O,O,X,X,X,O,X,O,X,X,O,O,O,O,O,O,X,X,O,O,O,O,
+//                                         O,O,O,O,O,O,O,X,X,X,O,X,X,O,O,O,O,O,O,X,X,O,X,O,O,X,X,O,O,O,
+//                                         X,O,O,O,O,O,O,O,X,O,O,O,O,X,O,O,O,X,O,X,X,O,O,O,O,X,X,O,O,O,
+//                                         X,X,O,X,X,O,O,O,O,X,X,X,X,O,O,O,X,O,X,O,O,X,O,O,X,X,O,X,X,O,
+//                                         O,X,X,O,O,O,O,O,O,O,O,X,O,O,X,O,O,X,O,O,O,O,O,O,O,X,O,X,O,O,
+//                                         O,X,X,X,O,O,O,X,O,O,O,O,X,O,X,O,X,O,O,X,X,X,O,O,X,O,O,X,X,O,
+//                                         O,O,O,O,O,O,X,O,X,X,O,O,O,X,O,X,O,X,X,X,O,O,O,X,X,X,X,X,O,X,
+//                                         O,X,X,O,O,O,O,O,O,X,O,X,O,X,X,O,O,O,O,X,X,O,O,O,X,X,O,O,X,X,
+//                                         X,X,O,X,O,O,O,O,O,O,X,O,X,O,X,O,X,O,O,X,O,X,O,O,O,O,O,O,O,X,
+//                                         X,O,O,X,O,O,X,X,O,O,O,O,O,O,O,X,O,O,X,O,X,X,O,O,X,X,O,X,O,X,
+//                                         O,X,X,O,O,X,X,X,O,O,X,O,X,O,X,O,O,O,O,O,O,X,O,O,O,O,O,X,O,O,
+//                                         O,O,O,X,O,X,O,X,X,O,O,O,O,O,O,O,X,O,O,X,X,O,O,X,O,X,O,X,O,O,
+//                                         O,O,O,X,X,X,O,O,O,O,X,O,O,X,X,X,O,O,O,X,O,O,X,O,X,X,O,O,O,X,
+//                                         O,X,X,O,O,O,O,X,O,O,O,X,O,O,O,O,O,X,X,O,O,O,X,X,X,O,O,X,O,O,
+//                                         X,X,O,X,X,X,O,O,O,O,O,O,O,O,O,X,O,O,O,O,O,O,X,O,X,O,O,O,O,O,
+//                                         O,X,X,O,O,O,X,O,O,O,X,O,O,O,O,O,O,O,X,X,O,X,O,O,X,O,X,O,X,O,
+//                                         O,X,X,O,O,O,O,X,X,O,O,O,X,O,X,O,X,O,O,O,X,O,X,O,X,O,O,X,O,O,
+//                                         O,X,O,O,O,O,X,O,X,O,X,O,O,X,O,X,X,X,O,X,O,X,X,X,O,X,O,O,O,X,
+//                                         O,O,X,O,O,O,O,X,O,O,X,O,O,O,O,X,X,O,O,X,O,O,O,O,O,X,O,O,X,O,
+//                                         O,X,O,O,O,O,X,O,O,O,O,O,O,X,O,X,X,X,O,X,O,O,O,O,X,X,O,X,X,O,
+//                                         X,O,X,X,O,O,O,O,O,O,X,O,O,O,X,O,O,O,X,X,O,X,O,O,O,X,X,O,X,O,
+//                                         O,O,O,O,O,O,O,O,O,X,O,X,O,X,O,O,O,O,O,X,O,O,O,O,O,O,X,O,O,O,
+//                                         O,O,O,O,O,O,O,X,O,X,O,O,O,O,O,O,X,X,O,O,O,X,O,X,O,O,O,O,O,O,
+//                                         X,O,O,O,X,O,O,O,X,O,O,O,O,X,O,O,X,O,X,O,O,X,O,O,O,O,O,X,O,O,
+//                                         O,X,O,O,O,X,O,O,O,O,O,O,O,O,O,O,O,O,X,O,O,O,O,O,O,O,X,X,O,X,
+//                                         X,X,X,X,O,X,O,O,O,O,O,O,O,X,O,O,O,O,O,O,X,X,O,X,O,O,O,X,O,X,
+//                                         O,O,O,O,X,O,O,X,O,O,O,X,X,O,X,O,O,X,X,O,O,O,O,X,O,X,X,X,O,O,
+//                                         O,X,X,O,X,X,X,X,O,O,X,X,O,X,X,X,X,X,O,O,X,O,X,O,O,O,O,X,O,O,
+//                                         O,X,O,O,O,O,O,X,O,O,X,O,X,O,O,X,X,O,X,X,O,X,O,O,O,O,O,O,O,O,
+//                                         X,X,O,O,X,X,O,O,X,O,O,O,O,O,O,O,O,X,O,O,O,O,O,O,X,O,O,O,O,O), felt*);
+//     let map = Map(map_grids, 30, 30);
+
+//     let start_x = 1;
+//     let start_y = 1;
+//     let end_x = 28;
+//     let end_y = 28;
+//     let (result_after_lenght: felt, result_after: Point*) = find_path{pedersen_ptr=pedersen_ptr, range_check_ptr=range_check_ptr, point_attribute=point_attribute, heap=heap}(start_x, start_y, end_x, end_y, map);
+//     return ();
+// }
