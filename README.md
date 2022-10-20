@@ -27,7 +27,7 @@ Input example in [test](https://github.com/dpinones/pathfinders-ar/blob/main/tes
 
 2. Using the web app in [link](https://dpinones.github.io/pathfinding-visualizer/).
 
-![Screenshot from 2022-10-11 12-46-54](https://user-images.githubusercontent.com/30808181/195159959-2e899199-f301-49c8-a0e9-23666677b473.png)
+![image](https://user-images.githubusercontent.com/58611754/196833523-5a07d662-11c3-4dc2-802f-b5f37ecfcd6d.png)
 
 Performance examples
 ------------
@@ -37,10 +37,11 @@ The following grid shows approximate values just to get an idea of the response 
 ------------------------------------------------------------------------------------------------------------
 |Map dimension|Clean map|Random maze|Recursive division maze|Vertical division maze|Horizontal division maze|
 | --- | --- | --- | --- | --- | --- |
-| 10 x 10 | 3.48s | 4.60s | 5.11s | 4.08s | 3.05s | 
-| 15 x 15 | 8.88s | 15.63s | 8.47s | 6.51s | 7.45s |
-| 20 x 20 | 18.66s | 21.53s | 17.07s | 10.76s | 14.74s |
-| 25 x 25 | X | X | X | 19.03s | 15.55s |
+| 10 x 10 | 1.80s | 2.23s | 1.86s | 3.17s | 1.82s | 
+| 15 x 15 | 4.12s | 3.95s | 3.36s | 2.98s | 2.85s |
+| 20 x 20 | 4.65s | 3.89s | 7.45s | 9.04s | 8.19s |
+| 25 x 25 | 11.00s | 8.92s | 9.82s | 8.60s | 8.35s ||
+| 30 x 30 | 18.59s | 12.26s | 8.97s | 10.47s | 13.05s |
 
 Next steps
 ------------
