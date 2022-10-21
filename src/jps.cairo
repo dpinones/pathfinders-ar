@@ -31,10 +31,8 @@ func find_path{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: Dic
         return (0, empty_list);
     }
 
-    // let start_point = Point(start_x, start_y);
-    // let end_point = Point(end_x, end_y);
     let start_id = convert_coords_to_id(start_x, start_y, map.width);
-    let distance_to_goal = octile(abs_value(start_x - goal_x), abs_value(start_y - goal_y)); 
+    let distance_to_goal = manhattan(abs_value(start_x - goal_x), abs_value(start_y - goal_y)); 
     set_point_attribute{point_attribute=point_attribute}(start_id, STATUS, OPENED);
     let heap_len = add(heap_len, start_id, distance_to_goal);
 
@@ -74,14 +72,14 @@ func _identify_successors{pedersen_ptr: HashBuiltin*, range_check_ptr, point_att
 
     if (jump_point != UNDEFINED) {
         tempvar jump_status = get_point_attribute(jump_point, STATUS);
-        let (jx, jy) = convert_id_to_coords(jump_point, map.width);
-        
         if (jump_status == CLOSED) {
             return _identify_successors(neighbours + 1, neighbours_lenght - 1, parent_x, parent_y, goal_x, goal_y, map);
         } 
-        let estimated_distance = octile(abs_value(jx - x), abs_value(jy - y)); 
+
+        let (jx, jy) = convert_id_to_coords(jump_point, map.width);
+        let estimated_distance_to_jump_point = manhattan(abs_value(jx - x), abs_value(jy - y)); 
         tempvar g_value = get_point_attribute([neighbours], DISTANCE_TRAVELED);
-        tempvar next_g = g_value + estimated_distance;
+        tempvar next_g = g_value + estimated_distance_to_jump_point;
 
         tempvar jump_g_value = get_point_attribute(jump_point, DISTANCE_TRAVELED);
         tempvar jump_g_is_bigger = is_le(next_g, jump_g_value + 1); // ng < jg
