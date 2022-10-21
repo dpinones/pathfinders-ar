@@ -99,7 +99,8 @@ func _identify_successors{pedersen_ptr: HashBuiltin*, range_check_ptr, point_att
             handle_revoked_refs();
             if (j_is_not_opened == TRUE) {
                 let jump_h_value = manhattan(abs_value(jx - goal_x), abs_value(jy - goal_y));
-                let new_heap_lengh = add(heap_len, jump_point, jump_h_value);
+                let jump_f_value = next_g + jump_h_value;
+                let new_heap_lengh = add(heap_len, jump_point, jump_f_value);
                 set_point_attribute(jump_point, STATUS, OPENED);
                 
                 tempvar pedersen_ptr = pedersen_ptr;
