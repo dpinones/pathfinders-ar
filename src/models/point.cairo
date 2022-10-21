@@ -7,10 +7,10 @@ from starkware.cairo.common.math_cmp import is_in_range
 from starkware.cairo.common.dict import DictAccess
 from starkware.cairo.common.hash import hash2
 
-from src.constants.point_attribute import PARENT, UNDEFINED, STATUS
+from src.constants.point_attribute import PARENT, UNDEFINED, DISTANCE_TRAVELED
 from src.constants.grid import X
-from src.utils.condition import _and, _equals, _max
-from src.utils.dictionary import read_entry, update_entry, write_entry
+from src.utils.condition import _and, _equals
+from src.utils.dictionary import read_entry, write_entry
 from src.utils.point_converter import convert_id_to_coords
 
 struct Point {
@@ -25,13 +25,8 @@ struct Point {
 // @param: attribute - Attribute name (could be any felt, but we use pre-defined ones from constants.point_attribute).
 // @return: felt - Value mapped to an attribute.
 func get_point_attribute{pedersen_ptr: HashBuiltin*, point_attribute: DictAccess*}(grid_id: felt, attribute: felt) -> felt {
-    alloc_locals;
     let (attribute_hash) = hash2{hash_ptr=pedersen_ptr}(grid_id, attribute);
     let value = read_entry{dict_ptr=point_attribute}(attribute_hash);
-    // if (value == UNDEFINED and attribute != PARENT and attribute != STATUS) {
-    //     return 0;
-    // }
-
     return value;
 }
 
@@ -43,15 +38,8 @@ func get_point_attribute{pedersen_ptr: HashBuiltin*, point_attribute: DictAccess
 // @return: felt - Value mapped to an attribute.
 func set_point_attribute{pedersen_ptr: HashBuiltin*, point_attribute: DictAccess*}(grid_id: felt, attribute: felt, new_value: felt) {
     let (attribute_hash) = hash2{hash_ptr=pedersen_ptr}(grid_id, attribute);
-    let actual_value = read_entry{dict_ptr=point_attribute}(attribute);
-
-    if (actual_value == UNDEFINED) {
-        write_entry{dict_ptr=point_attribute}(attribute_hash, new_value);
-        return ();
-    } else {
-        update_entry{dict_ptr=point_attribute}(attribute_hash, actual_value, new_value);
-        return ();
-    }
+    write_entry{dict_ptr=point_attribute}(attribute_hash, new_value);
+    return();
 }
 
 // Check if an array of points contains a point with position (x, y).
@@ -118,13 +106,13 @@ func _build_reverse_path_from{pedersen_ptr: HashBuiltin*, range_check_ptr, point
     let parent_id = get_point_attribute(grid_id, PARENT);
     if (parent_id != UNDEFINED) {
         let (x, y) = convert_id_to_coords(parent_id, width);
-        // %{
-        //     from requests import post
-        //     json = { # creating the body of the post request so it's printed in the python script
-        //         "node": f" id {ids.parent_id} ({ids.x}, {ids.y})"
-        //     }
-        //     post(url="http://localhost:5000", json=json) # sending the request to our small "server"
-        // %}
+        %{
+            from requests import post
+            json = { # creating the body of the post request so it's printed in the python script
+                "node": f" id {ids.parent_id} ({ids.x}, {ids.y})"
+            }
+            post(url="http://localhost:5000", json=json) # sending the request to our small "server"
+        %}
         assert result[result_len] = Point(x, y);
         return _build_reverse_path_from(parent_id, width, result, result_len + 1);
     } else {

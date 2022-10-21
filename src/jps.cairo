@@ -90,41 +90,16 @@ func _identify_successors{pedersen_ptr: HashBuiltin*, range_check_ptr, point_att
         tempvar next_g = g_value + estimated_distance_to_jump_point;
 
         let jump_g_value = get_point_attribute(jump_point, DISTANCE_TRAVELED);
-        tempvar jump_g_is_bigger = is_le(next_g, jump_g_value + 1); // ng < jg
+        tempvar jump_g_is_bigger = is_le(next_g ,jump_g_value + 1); // ng < jg
         tempvar j_is_not_opened = _equals(jump_status, UNDEFINED); // !opened
         tempvar is_valid_add_jump_point = _or(jump_g_is_bigger, j_is_not_opened);
         if (is_valid_add_jump_point == TRUE) {
-            set_point_attribute(jump_point, DISTANCE_TRAVELED, next_g);
             set_point_attribute(jump_point, PARENT, parent_id);
-            
-            let jump_point_attribute_h = get_point_attribute(jump_point, DISTANCE_TO_GOAL);
-            if (jump_point_attribute_h == UNDEFINED) {
-                let jump_h_value = manhattan(abs_value(jx - goal_x), abs_value(jy - goal_y));
-                set_point_attribute(jump_point, DISTANCE_TO_GOAL, jump_h_value);
-                set_point_attribute(jump_point, ESTIMATED_TOTAL_PATH_DISTANCE, next_g + jump_h_value);
-
-                tempvar pedersen_ptr = pedersen_ptr;
-                tempvar range_check_ptr = range_check_ptr;
-                tempvar point_attribute = point_attribute;
-                tempvar heap = heap;
-                tempvar heap_len = heap_len;
-            } else {
-                set_point_attribute(jump_point, ESTIMATED_TOTAL_PATH_DISTANCE, next_g + jump_point_attribute_h);
-                tempvar pedersen_ptr = pedersen_ptr;
-                tempvar range_check_ptr = range_check_ptr;
-                tempvar point_attribute = point_attribute;
-                tempvar heap = heap;
-                tempvar heap_len = heap_len;
-            }
-
-            tempvar pedersen_ptr = pedersen_ptr;
-            tempvar range_check_ptr = range_check_ptr;
-            tempvar point_attribute = point_attribute;
-            tempvar heap = heap;
-            tempvar heap_len = heap_len;
+            set_point_attribute(jump_point, DISTANCE_TRAVELED, next_g);
+            handle_revoked_refs();
             if (j_is_not_opened == TRUE) {
-                let jump_f_value = get_point_attribute(jump_point, ESTIMATED_TOTAL_PATH_DISTANCE);
-                let new_heap_lengh = add(heap_len, jump_point, jump_f_value);
+                let jump_h_value = manhattan(abs_value(jx - goal_x), abs_value(jy - goal_y));
+                let new_heap_lengh = add(heap_len, jump_point, jump_h_value);
                 set_point_attribute(jump_point, STATUS, OPENED);
                 
                 tempvar pedersen_ptr = pedersen_ptr;
@@ -245,3 +220,11 @@ func jump{range_check_ptr, pedersen_ptr: HashBuiltin*}(x: felt, y: felt, px: fel
     }
 }
 
+func handle_revoked_refs{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*, heap: DictAccess*, heap_len}() {
+    tempvar pedersen_ptr = pedersen_ptr;
+    tempvar range_check_ptr = range_check_ptr;
+    tempvar point_attribute = point_attribute;
+    tempvar heap = heap;
+    tempvar heap_len = heap_len;
+    return();
+}
