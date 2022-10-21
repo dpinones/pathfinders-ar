@@ -7,7 +7,7 @@ from starkware.cairo.common.math_cmp import is_in_range
 from starkware.cairo.common.dict import DictAccess
 from starkware.cairo.common.hash import hash2
 
-from src.constants.point_attribute import PARENT, UNDEFINED
+from src.constants.point_attribute import PARENT, UNDEFINED, STATUS
 from src.constants.grid import X
 from src.utils.condition import _and, _equals, _max
 from src.utils.dictionary import read_entry, update_entry, write_entry
@@ -25,8 +25,12 @@ struct Point {
 // @param: attribute - Attribute name (could be any felt, but we use pre-defined ones from constants.point_attribute).
 // @return: felt - Value mapped to an attribute.
 func get_point_attribute{pedersen_ptr: HashBuiltin*, point_attribute: DictAccess*}(grid_id: felt, attribute: felt) -> felt {
+    alloc_locals;
     let (attribute_hash) = hash2{hash_ptr=pedersen_ptr}(grid_id, attribute);
     let value = read_entry{dict_ptr=point_attribute}(attribute_hash);
+    // if (value == UNDEFINED and attribute != PARENT and attribute != STATUS) {
+    //     return 0;
+    // }
 
     return value;
 }
@@ -114,6 +118,13 @@ func _build_reverse_path_from{pedersen_ptr: HashBuiltin*, range_check_ptr, point
     let parent_id = get_point_attribute(grid_id, PARENT);
     if (parent_id != UNDEFINED) {
         let (x, y) = convert_id_to_coords(parent_id, width);
+        // %{
+        //     from requests import post
+        //     json = { # creating the body of the post request so it's printed in the python script
+        //         "node": f" id {ids.parent_id} ({ids.x}, {ids.y})"
+        //     }
+        //     post(url="http://localhost:5000", json=json) # sending the request to our small "server"
+        // %}
         assert result[result_len] = Point(x, y);
         return _build_reverse_path_from(parent_id, width, result, result_len + 1);
     } else {
