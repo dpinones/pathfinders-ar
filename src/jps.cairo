@@ -31,10 +31,8 @@ func find_path{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: Dic
         return (0, empty_list);
     }
 
-    // let start_point = Point(start_x, start_y);
-    // let end_point = Point(end_x, end_y);
     let start_id = convert_coords_to_id(start_x, start_y, map.width);
-    let distance_to_goal = octile(abs_value(start_x - goal_x), abs_value(start_y - goal_y)); 
+    let distance_to_goal = manhattan(abs_value(start_x - goal_x), abs_value(start_y - goal_y)); 
     set_point_attribute{point_attribute=point_attribute}(start_id, STATUS, OPENED);
     let heap_len = add(heap_len, start_id, distance_to_goal);
 
@@ -60,6 +58,13 @@ func _find_path{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: Di
 
 func identify_successors{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*, heap: DictAccess*, heap_len}(node_id: felt, node_x: felt, node_y: felt, goal_x: felt, goal_y: felt, map: Map) {
     set_point_attribute{pedersen_ptr=pedersen_ptr, point_attribute=point_attribute}(node_id, STATUS, CLOSED);
+        //         %{
+        //     from requests import post
+        //     json = { # creating the body of the post request so it's printed in the python script
+        //         "setting close status": f"{ids.node_id} CLOSED"
+        //     }
+        //     post(url="http://localhost:5000", json=json) # sending the request to our small "server"
+        // %}
     let (neighbours_lenght: felt, neighbours: felt*) = get_neighbours(map, node_id);
     return _identify_successors(neighbours, neighbours_lenght, node_x, node_y, goal_x, goal_y, map);
 }
@@ -73,52 +78,28 @@ func _identify_successors{pedersen_ptr: HashBuiltin*, range_check_ptr, point_att
     let jump_point = jump(x, y, parent_x, parent_y, goal_x, goal_y, map);
 
     if (jump_point != UNDEFINED) {
-        tempvar jump_status = get_point_attribute(jump_point, STATUS);
-        let (jx, jy) = convert_id_to_coords(jump_point, map.width);
-        
+        let jump_status = get_point_attribute(jump_point, STATUS);
         if (jump_status == CLOSED) {
             return _identify_successors(neighbours + 1, neighbours_lenght - 1, parent_x, parent_y, goal_x, goal_y, map);
         } 
-        let estimated_distance = octile(abs_value(jx - x), abs_value(jy - y)); 
-        tempvar g_value = get_point_attribute([neighbours], DISTANCE_TRAVELED);
-        tempvar next_g = g_value + estimated_distance;
 
-        tempvar jump_g_value = get_point_attribute(jump_point, DISTANCE_TRAVELED);
-        tempvar jump_g_is_bigger = is_le(next_g, jump_g_value + 1); // ng < jg
-        tempvar j_is_not_opened = _not(_equals(jump_status, OPENED)); // !opened
+        let (jx, jy) = convert_id_to_coords(jump_point, map.width);
+        let parent_id = convert_coords_to_id(parent_x, parent_y, map.width);
+        let estimated_distance_to_jump_point = manhattan(abs_value(jx - parent_x), abs_value(jy - parent_y)); 
+        let g_value = get_point_attribute(parent_id, DISTANCE_TRAVELED);
+        tempvar next_g = g_value + estimated_distance_to_jump_point;
+
+        let jump_g_value = get_point_attribute(jump_point, DISTANCE_TRAVELED);
+        tempvar jump_g_is_bigger = is_le(next_g ,jump_g_value + 1); // ng < jg
+        tempvar j_is_not_opened = _equals(jump_status, UNDEFINED); // !opened
         tempvar is_valid_add_jump_point = _or(jump_g_is_bigger, j_is_not_opened);
         if (is_valid_add_jump_point == TRUE) {
-            set_point_attribute(jump_point, DISTANCE_TRAVELED, next_g);
-            let parent_id = convert_coords_to_id(parent_x, parent_y, map.width);
             set_point_attribute(jump_point, PARENT, parent_id);
-            
-            let jump_point_attribute_h = get_point_attribute(jump_point, DISTANCE_TO_GOAL);
-            if (jump_point_attribute_h == UNDEFINED) {
-                let jump_h_value = octile(abs_value(jx - goal_x), abs_value(jy - goal_y));
-                set_point_attribute(jump_point, DISTANCE_TO_GOAL, jump_h_value);
-                set_point_attribute(jump_point, ESTIMATED_TOTAL_PATH_DISTANCE, jump_g_value + jump_h_value);
-
-                tempvar pedersen_ptr = pedersen_ptr;
-                tempvar range_check_ptr = range_check_ptr;
-                tempvar point_attribute = point_attribute;
-                tempvar heap = heap;
-                tempvar heap_len = heap_len;
-            } else {
-                set_point_attribute(jump_point, ESTIMATED_TOTAL_PATH_DISTANCE, jump_g_value + jump_point_attribute_h);
-                tempvar pedersen_ptr = pedersen_ptr;
-                tempvar range_check_ptr = range_check_ptr;
-                tempvar point_attribute = point_attribute;
-                tempvar heap = heap;
-                tempvar heap_len = heap_len;
-            }
-
-            tempvar pedersen_ptr = pedersen_ptr;
-            tempvar range_check_ptr = range_check_ptr;
-            tempvar point_attribute = point_attribute;
-            tempvar heap = heap;
-            tempvar heap_len = heap_len;
+            set_point_attribute(jump_point, DISTANCE_TRAVELED, next_g);
+            handle_revoked_refs();
             if (j_is_not_opened == TRUE) {
-                let jump_f_value = get_point_attribute(jump_point, ESTIMATED_TOTAL_PATH_DISTANCE);
+                let jump_h_value = manhattan(abs_value(jx - goal_x), abs_value(jy - goal_y));
+                let jump_f_value = next_g + jump_h_value;
                 let new_heap_lengh = add(heap_len, jump_point, jump_f_value);
                 set_point_attribute(jump_point, STATUS, OPENED);
                 
@@ -240,3 +221,11 @@ func jump{range_check_ptr, pedersen_ptr: HashBuiltin*}(x: felt, y: felt, px: fel
     }
 }
 
+func handle_revoked_refs{pedersen_ptr: HashBuiltin*, range_check_ptr, point_attribute: DictAccess*, heap: DictAccess*, heap_len}() {
+    tempvar pedersen_ptr = pedersen_ptr;
+    tempvar range_check_ptr = range_check_ptr;
+    tempvar point_attribute = point_attribute;
+    tempvar heap = heap;
+    tempvar heap_len = heap_len;
+    return();
+}

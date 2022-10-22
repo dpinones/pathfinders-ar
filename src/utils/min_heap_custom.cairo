@@ -23,7 +23,7 @@ func heap_create{range_check_ptr}() -> (heap : DictAccess*, heap_len : felt) {
     let (local heap) = default_dict_new(default_value=UNDEFINED);
     default_dict_finalize(dict_accesses_start=heap, dict_accesses_end=heap, default_value=UNDEFINED);
 
-    return (heap, 0);
+    return (heap, 0); 
 }
 
 // Insert new value to max heap.
