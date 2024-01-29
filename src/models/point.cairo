@@ -7,10 +7,10 @@ from starkware.cairo.common.math_cmp import is_in_range
 from starkware.cairo.common.dict import DictAccess
 from starkware.cairo.common.hash import hash2
 
-from src.constants.point_attribute import PARENT, UNDEFINED
+from src.constants.point_attribute import PARENT, UNDEFINED, DISTANCE_TRAVELED
 from src.constants.grid import X
-from src.utils.condition import _and, _equals, _max
-from src.utils.dictionary import read_entry, update_entry, write_entry
+from src.utils.condition import _and, _equals
+from src.utils.dictionary import read_entry, write_entry
 from src.utils.point_converter import convert_id_to_coords
 
 struct Point {
@@ -27,7 +27,6 @@ struct Point {
 func get_point_attribute{pedersen_ptr: HashBuiltin*, point_attribute: DictAccess*}(grid_id: felt, attribute: felt) -> felt {
     let (attribute_hash) = hash2{hash_ptr=pedersen_ptr}(grid_id, attribute);
     let value = read_entry{dict_ptr=point_attribute}(attribute_hash);
-
     return value;
 }
 
@@ -39,15 +38,8 @@ func get_point_attribute{pedersen_ptr: HashBuiltin*, point_attribute: DictAccess
 // @return: felt - Value mapped to an attribute.
 func set_point_attribute{pedersen_ptr: HashBuiltin*, point_attribute: DictAccess*}(grid_id: felt, attribute: felt, new_value: felt) {
     let (attribute_hash) = hash2{hash_ptr=pedersen_ptr}(grid_id, attribute);
-    let actual_value = read_entry{dict_ptr=point_attribute}(attribute);
-
-    if (actual_value == UNDEFINED) {
-        write_entry{dict_ptr=point_attribute}(attribute_hash, new_value);
-        return ();
-    } else {
-        update_entry{dict_ptr=point_attribute}(attribute_hash, actual_value, new_value);
-        return ();
-    }
+    write_entry{dict_ptr=point_attribute}(attribute_hash, new_value);
+    return();
 }
 
 // Check if an array of points contains a point with position (x, y).
